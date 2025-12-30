@@ -488,3 +488,11 @@ Note: Do not record verbatim user messages in this file; track requirements by R
   - Files: scripts/recreate_repo.sh, tools/github_bootstrap.py, tools/github_bootstrap_config.json
   - Notes: Execute the script to delete the remote repo, remove local .git, re-init, and push a fresh main branch.
   - Evidence: docs/TEST_LOG.md (2025-12-30T12:50:37Z)
+- [x] REQ-150: Expand README local setup to match Dockerfile requirements for --run-all-tests parity.
+  - Files: README.md, Dockerfile
+  - Notes: Document system packages, tool versions, and Playwright/Typst setup required for local parity.
+  - Evidence: docs/TEST_LOG.md (2025-12-30T13:00:29Z)
+- [x] REQ-151: Update README local setup to reflect WSL as the intended environment.
+  - Files: README.md
+  - Notes: Clarify WSL expectations and adjust local setup guidance accordingly.
+  - Evidence: docs/TEST_LOG.md (2025-12-30T13:03:37Z)

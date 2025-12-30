@@ -736,3 +736,7 @@
 - 2025-12-30T12:50:37Z: scripts/recreate_repo.sh (pass)
   - Command: scripts/recreate_repo.sh --yes
   - Notes: Deleted and recreated the remote repo, removed local git metadata, reinitialized, and pushed a fresh main branch for REQ-149.
+- 2025-12-30T13:00:29Z: Manual review (pass)
+  - Notes: Expanded README local setup with Dockerfile parity requirements for --run-all-tests; tests not requested.
+- 2025-12-30T13:03:37Z: Manual review (pass)
+  - Notes: Updated README local setup to reflect WSL as the intended environment; tests not requested.

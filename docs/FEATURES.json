@@ -1222,5 +1222,23 @@
     "tests": [
       "scripts/recreate_repo.sh"
     ]
+  },
+  {
+    "id": "REQ-150",
+    "statement": "Expand README local setup to match Dockerfile requirements for --run-all-tests parity.",
+    "status": "passing",
+    "evidence": "docs/TEST_LOG.md (2025-12-30T13:00:29Z)",
+    "tests": [
+      "manual review"
+    ]
+  },
+  {
+    "id": "REQ-151",
+    "statement": "Update README local setup to reflect WSL as the intended environment.",
+    "status": "passing",
+    "evidence": "docs/TEST_LOG.md (2025-12-30T13:03:37Z)",
+    "tests": [
+      "manual review"
+    ]
   }
 ]

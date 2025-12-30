@@ -3,7 +3,7 @@
 ## Status
 - Phase: Stabilization
 - Owner: Codex
-- Timestamp: 2025-12-30T12:51:12Z
+- Timestamp: 2025-12-30T13:04:07Z
 
 ## Timebox
 - Requested duration: 4 hours
@@ -20,11 +20,11 @@
 - Test policy: tests are optional and run only on explicit request; confirm non-production DB targets
 
 ## Fingerprints
-- README.md: 2f770945fe0a88e147d60c32ea8c087f14e8748d4aa05d57ca6efb73b93c2d33
+- README.md: e106af38a966da02316564eadad647e0e74e7857d62ebb3ca5ffb6e6003d02ec
 - docs/TESTING.md: 0745f8d4067f6f9f0510d2ae22b78f1b0ed0c457cd4faf8ab7a4001ecafd098b
 - docs/LONG_RUN.md: 349d222690d4b477a4473847199d07ffc37caee3b2b9b770fe0a43355d11cc4a
-- docs/REQUIREMENTS.md: 956d7bc271757b687b617649f0423e5de5482fba84b7f8ccc1ee48774dc30bc0
-- docs/FEATURES.json: 39e8dadc3eb7fe6d39a884df30ca977fa4cc7c5fef22ca3932f77d5cbe9ff893
+- docs/REQUIREMENTS.md: 87d0ac9c194e9eb0263568050dcf1da5f0959f1d62089d6de29f71a63436ab2a
+- docs/FEATURES.json: f26358cc4a38ac9ddbaeee38cc62f4d56b44acafe9efb67e8ba7065e45d0749b
 
 ## File Claims
 - None (released)
@@ -2245,3 +2245,43 @@
 - Failed assumption: git push would succeed without a credential helper in a non-interactive session.
   - Corrective action: reran the script with GIT_ASKPASS to supply credentials.
   - Prevention: run repo reset script with GIT_ASKPASS and GIT_TERMINAL_PROMPT=0 by default in automation.
+- 2025-12-30T12:59:54Z: Phase transition: Stabilization -> Intake (REQ-150).
+- Intake complete: README.md, docs/TESTING.md, docs/LONG_RUN.md reviewed.
+- New request intake: [redacted].
+- 2025-12-30T12:59:54Z: Phase transition: Intake -> Requirements (REQ-150).
+- Requirements updated: REQ-150 added to docs/REQUIREMENTS.md and docs/FEATURES.json.
+- 2025-12-30T12:59:54Z: Phase transition: Requirements -> Design (REQ-150).
+- Design review (REQ-150): plan updated with M145; plan reviewed for completeness.
+- Requirement restatement (pre-implementation): [redacted].
+- 2025-12-30T13:01:00Z: Phase transition: Design -> Implementation (REQ-150).
+- Implementation: expanded README local setup with Dockerfile parity requirements for --run-all-tests.
+- Requirement restatement (post-implementation): [redacted].
+- 2025-12-30T13:01:00Z: Phase transition: Implementation -> Verification (REQ-150).
+- Verification: manual review logged in docs/TEST_LOG.md (2025-12-30T13:00:29Z).
+- 2025-12-30T13:01:00Z: Phase transition: Verification -> Stabilization (REQ-150).
+- Stabilization: updated requirements/plan/features status for REQ-150 with evidence.
+- 2025-12-30T13:01:00Z: Fingerprint change detected: docs/REQUIREMENTS.md updated; hashes recorded above. Supporting docs/PLAN.md, docs/FEATURES.json, docs/TEST_LOG.md, README.md updated.
+- 2025-12-30T13:01:00Z: Checkpoint (REQ-150): scope=README local setup parity update; tests run=manual review; last known good=docs/TEST_LOG.md (2025-12-30T13:00:29Z); remaining risks=local packages may vary by OS.
+- Failed assumption: the previous local setup section was sufficient for --run-all-tests parity.
+  - Corrective action: documented Dockerfile-equivalent packages and tools in README.
+  - Prevention: sync README setup instructions after Dockerfile changes.
+- 2025-12-30T13:02:43Z: Phase transition: Stabilization -> Intake (REQ-151).
+- Intake complete: README.md, docs/TESTING.md, docs/LONG_RUN.md reviewed.
+- New request intake: [redacted].
+- 2025-12-30T13:02:43Z: Phase transition: Intake -> Requirements (REQ-151).
+- Requirements updated: REQ-151 added to docs/REQUIREMENTS.md and docs/FEATURES.json.
+- 2025-12-30T13:02:43Z: Phase transition: Requirements -> Design (REQ-151).
+- Design review (REQ-151): plan updated with M146; plan reviewed for completeness.
+- Requirement restatement (pre-implementation): [redacted].
+- 2025-12-30T13:04:07Z: Phase transition: Design -> Implementation (REQ-151).
+- Implementation: updated README local setup to target WSL and clarify Docker Desktop integration.
+- Requirement restatement (post-implementation): [redacted].
+- 2025-12-30T13:04:07Z: Phase transition: Implementation -> Verification (REQ-151).
+- Verification: manual review logged in docs/TEST_LOG.md (2025-12-30T13:03:37Z).
+- 2025-12-30T13:04:07Z: Phase transition: Verification -> Stabilization (REQ-151).
+- Stabilization: updated requirements/plan/features status for REQ-151 with evidence.
+- 2025-12-30T13:04:07Z: Fingerprint change detected: docs/REQUIREMENTS.md updated; hashes recorded above. Supporting docs/PLAN.md, docs/FEATURES.json, docs/TEST_LOG.md, README.md updated.
+- 2025-12-30T13:04:07Z: Checkpoint (REQ-151): scope=README WSL setup update; tests run=manual review; last known good=docs/TEST_LOG.md (2025-12-30T13:03:37Z); remaining risks=WSL setup steps may vary by distro.
+- Failed assumption: local setup guidance did not need to specify the WSL target environment.
+  - Corrective action: clarified WSL expectations and Docker Desktop integration in README.
+  - Prevention: state the intended OS target explicitly in setup sections.

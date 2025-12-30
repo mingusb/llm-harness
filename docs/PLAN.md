@@ -646,6 +646,18 @@
   - Risks: deletion is irreversible; local .git removal discards metadata.
   - Verification approach: run scripts/recreate_repo.sh --yes and log commands.
   - Evidence: docs/TEST_LOG.md (2025-12-30T12:50:37Z).
+- [x] M145 (REQ-150): Expand README local setup with Dockerfile parity requirements.
+  - Exit criteria: README local setup covers system packages, tool versions, and Playwright/Typst steps needed for --run-all-tests parity.
+  - Dependencies: README.md, Dockerfile.
+  - Risks: missing a dependency could still break local parity.
+  - Verification approach: manual review; tests not requested.
+  - Evidence: docs/TEST_LOG.md (2025-12-30T13:00:29Z).
+- [x] M146 (REQ-151): Update README local setup for WSL expectations.
+  - Exit criteria: README clarifies WSL as the target environment and aligns setup steps accordingly.
+  - Dependencies: README.md.
+  - Risks: WSL-specific instructions may be confusing for non-WSL users.
+  - Verification approach: manual review; tests not requested.
+  - Evidence: docs/TEST_LOG.md (2025-12-30T13:03:37Z).
 
 ## Dependencies
 - Python tooling installed for all static analyzers in harness.py.

@@ -80,6 +80,9 @@ python harness.py --compile-pdf /tmp/preview.pdf
 
 ## Local setup
 
+Target environment: WSL2 with Ubuntu 22.04 or newer. The commands below assume a Debian/Ubuntu shell in WSL. If you use
+Docker Desktop on Windows, enable WSL integration for your distro so `docker compose` works inside WSL.
+
 Recommended (conda or mamba):
 
 ```bash
@@ -96,6 +99,31 @@ pip install -r requirements.txt
 ```
 
 Typst is required for PDF output. Ensure `typst` is available on your PATH.
+
+For parity with `--run-all-tests` outside Docker, install the same system tooling the Dockerfile uses.
+Ubuntu/Debian example:
+
+```bash
+sudo apt-get update && sudo apt-get install -y \
+  build-essential pkg-config curl ca-certificates gnupg git unzip xz-utils bzip2 \
+  graphviz poppler-utils mupdf-tools shellcheck
+```
+
+Node 20 (matches the container runtime):
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+```
+
+Then install the remaining pinned tools and browser deps:
+
+- Typst v0.14.2 on your PATH.
+- `shfmt` v3.8.0 and `hadolint` v2.12.0 on your PATH.
+- `pip install semgrep==1.146.0`
+- `python -m playwright install --with-deps chromium`
+
+On macOS/Windows, install equivalents via your package manager and ensure versions align with the Dockerfile.
 
 ## Inputs and data
 
