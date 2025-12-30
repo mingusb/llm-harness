@@ -1,0 +1,679 @@
+# PLAN
+
+## Milestones
+- [x] M1 (REQ-001): Update static analysis tooling to add codespell, pip-audit, safety, and pyupgrade with safe parsing and non-destructive pyupgrade checks.
+  - Exit criteria: tools appear in the static report; pyupgrade runs on temp copies only.
+- [x] M2 (REQ-002, REQ-003, REQ-005): Remove static-analysis timeouts for pip-audit/pytype and fail on missing tools.
+  - Exit criteria: pip-audit and pytype run without subprocess timeout; missing tool status=fail and run-all-tests exits non-zero if any fail.
+- [x] M3 (REQ-006): Wire diagram generation into the full test flow and ensure dependencies are installed.
+  - Exit criteria: diagrams render into diagrams/ during run-all-tests and any failures are reported.
+- [x] M4 (REQ-007, REQ-008): Update Docker e2e runner to execute --run-all-tests with all dependencies installed.
+  - Exit criteria: scripts/run_maxcov_e2e.sh runs run-all-tests and Dockerfile installs required tools.
+- [x] M5 (REQ-004): Run python harness.py --run-all-tests; record results and update state files.
+  - Exit criteria: run-all-tests passes; docs/TEST_LOG.md and docs/AGENT_STATE.md updated.
+- [x] M6 (REQ-009, REQ-010): Replace the legacy resume JSON with michael_scott_resume.json and seed full resume data (ASCII-only) across profile, experience, education, founder roles, skills, and custom sections.
+  - Exit criteria: default asset references point to michael_scott_resume.json; new JSON validated with required fields and no non-ASCII content.
+- [x] M7 (REQ-011, REQ-012): Add safe import guardrails and ensure dev/test flows use stub or ephemeral DB; document CLI import workflow.
+  - Exit criteria: importing assets refuses to overwrite existing resume without explicit override; docs updated with import usage and test isolation notes.
+- [x] M8 (REQ-013): Run python harness.py --run-all-tests and record results for the updated resume assets.
+  - Exit criteria: run-all-tests passes; docs/TEST_LOG.md, docs/AGENT_STATE.md, and docs/FEATURES.json updated with evidence.
+- [x] M9 (REQ-014): Compile the Michael Scott PDF with a stubbed DB and review the rendered output via Vision.
+  - Exit criteria: PDF compiled with MAX_COVERAGE_STUB_DB=1, rendered pages reviewed, and evidence recorded in docs/TEST_LOG.md.
+- [x] M10 (REQ-015): Adjust Typst header layout to keep long names on a single line.
+  - Exit criteria: long names render without wrapping; run-all-tests passes; evidence logged in docs/TEST_LOG.md.
+- [x] M11 (REQ-016): Convert the legacy resume PDF into a JSON asset matching the import schema.
+  - Exit criteria: new JSON asset is ASCII-only, includes required fields, and matches the import schema.
+- [x] M12 (REQ-017): Import the legacy resume JSON into Neo4j via CLI.
+  - Exit criteria: python harness.py --import-assets legacy_resume.json reports success; outcome logged in docs/TEST_LOG.md.
+- [x] M13 (REQ-018): Run python harness.py --run-all-tests and record results.
+  - Exit criteria: run-all-tests passes; docs/TEST_LOG.md and docs/AGENT_STATE.md updated; docs/FEATURES.json set to passing with evidence.
+- [x] M14 (REQ-019): Apply summary tail color to rasterized company descriptions.
+  - Exit criteria: experience and founder descriptions render with SOFT_SECONDARY_FILL in both rasterized and text fallback paths.
+- [x] M15 (REQ-020): Escape literal < and > in bullet fields for Typst rendering.
+  - Exit criteria: inline text rendering escapes < and > while preserving <b> tag handling.
+- [x] M16 (REQ-021): Increase bullet wrap leading for bullet lists.
+  - Exit criteria: bullet paragraphs use a medium leading value with a reasonable minimum clamp to prevent over-tightening.
+- [x] M17 (REQ-022): Capture before/after PDFs and perform Vision comparison.
+  - Exit criteria: before/after PDFs rendered via CLI; Vision notes recorded in docs/TEST_LOG.md showing improved bullet wrap leading.
+- [x] M18 (REQ-023): Align Education date range formatting with Experience spacing.
+  - Exit criteria: Education date ranges use " - " spacing in rendered output; verification logged (manual or tests if requested) in docs/TEST_LOG.md.
+- [x] M19 (REQ-024): Make tests optional in AGENTS.md with explicit-request gating.
+  - Exit criteria: AGENTS.md updated to make tests optional and require explicit requests; skip logged in docs/TEST_LOG.md.
+- [x] M20 (REQ-025): Tighten test policy for production DB safety and mirror in docs/TESTING.md.
+  - Exit criteria: AGENTS.md forbids production DB runs without explicit confirmation; docs/TESTING.md reflects optional tests and non-production DB requirement; manual verification logged in docs/TEST_LOG.md.
+- [x] M21 (REQ-026): Inject stop-list phrases into the LLM prompt and enforce stop-list filtering with retries.
+  - Exit criteria: prompt template includes stop-list injection (or placeholder replacement), LLM output is scanned for stop-list terms, and retry loop returns clean JSON or a stop-list error; manual verification logged in docs/TEST_LOG.md.
+- [x] M22 (REQ-027): Improve the stop-list itself with added/refined forbidden phrases and de-duplication.
+  - Exit criteria: stop-list terms updated with new phrases/variants, duplicates removed, and manual verification logged in docs/TEST_LOG.md.
+- [x] M23 (REQ-028): Expand stop-list using online research into high-tech resume buzzwords and management-speak cliches.
+  - Exit criteria: new stop-list terms added from researched sources, duplicates avoided, and manual verification logged in docs/TEST_LOG.md.
+- [x] M24 (REQ-029): Route --run-all-tests through the dockerized e2e runner and avoid recursion.
+  - Exit criteria: --run-all-tests invokes scripts/run_maxcov_e2e.sh --force with sudo prompting via expect; a new local runner (e.g., --run-all-tests-local) handles in-container execution; scripts/run_maxcov.sh uses the local runner; docs updated to reflect dockerized behavior and warnings.
+- [x] M25 (REQ-030): Fix run-all-tests static warnings/errors (scope to be confirmed).
+  - Exit criteria: user-approved scope documented; selected tool warnings/errors resolved or reduced to agreed threshold; verification logged in docs/TEST_LOG.md (tests run only if explicitly requested).
+  - Selected scope: Option A + low-hanging items from Options B/C (semgrep parse robustness, pyupgrade rc fix, pip-audit ignore for unpatched vuln; ruff/black/isort/codespell cleanup; minimal tool-flag fixes such as pytype compatibility).
+  - Current timebox focus: reduce high-noise warnings via targeted tool config alignment (pydocstyle/bandit) and review additional low-risk noise reductions (vulture/deptry/pyright) without broad refactors; rerun static tools after each change and log results.
+  - Plan options (Architect selection):
+    - Option A: Only hard errors (semgrep parse error, tool exit codes, pip-audit issues).
+    - Option B: Formatting + lint cleanup (black/isort/ruff/flake8/pycodestyle/pyflakes/pydocstyle/codespell) before type/security/complexity.
+    - Option C: Full static clean (formatting + lint + type + complexity + security), likely requiring broader refactors.
+  - Status: complete; Evidence: docs/TEST_LOG.md (2025-12-27T05:18:58Z, 2025-12-27T05:47:19Z, 2025-12-27T08:27:28Z, 2025-12-27T12:22:18Z).
+- [x] M26 (REQ-031): Clarify Neo4j backup policy for containerized tests.
+  - Exit criteria: docs/TESTING.md and README.md state that dockerized/ephemeral test runs do not require Neo4j backups; manual verification logged in docs/TEST_LOG.md.
+- [ ] M27 (REQ-032): Debug pytype on the host (outside the container) until it completes successfully.
+  - Exit criteria: pytype run on the host completes without hanging; results and command recorded in docs/TEST_LOG.md; any required config or harness updates captured.
+  - Status: blocked (superseded by REQ-033); Evidence: docs/TEST_LOG.md (2025-12-26T20:56:53Z).
+- [x] M28 (REQ-033): Remove pytype from static analysis tooling and dependencies.
+  - Exit criteria: pytype removed from requirements.txt and static analysis tool list; pytype parser/output handling removed; docs updated to reflect removal; verification logged in docs/TEST_LOG.md.
+- [x] M29 (REQ-034): Add timebox tracking and enforcement guidance to AGENTS.md.
+  - Exit criteria: AGENTS.md instructs agents to record requested work duration, track elapsed time, and stop/check in at the limit; manual verification logged in docs/TEST_LOG.md.
+- [x] M30 (REQ-035): Address timebox enforcement risk with explicit tracking and check-in guardrails.
+  - Exit criteria: AGENTS.md includes concrete timebox tracking fields and deadline check rules; docs/PLAN.md risk updated; manual verification logged in docs/TEST_LOG.md.
+- [x] M31 (REQ-036): Add mandatory timebox tracking fields and stop conditions.
+  - Exit criteria: AGENTS.md mandates a Timebox block with deadline/last-check fields and stop-if-missing rules; manual verification logged in docs/TEST_LOG.md.
+- [x] M32 (REQ-037): Ensure timebox guidance forbids early input requests.
+  - Exit criteria: AGENTS.md instructs agents to avoid requesting user input before a timebox deadline and to pivot while blocked; manual verification logged in docs/TEST_LOG.md.
+- [x] M33 (REQ-038): Clear all outstanding tasks now.
+  - Exit criteria: remaining pending requirements are marked blocked with evidence per user request; manual verification logged in docs/TEST_LOG.md.
+- [x] M34 (REQ-039): Add timebox deadline task-termination rule.
+  - Exit criteria: AGENTS.md instructs agents to stop work and terminate background tasks at the deadline; manual verification logged in docs/TEST_LOG.md.
+- [x] M35 (REQ-040): Add stop-time announcement and short timebox overrun handling.
+  - Exit criteria: AGENTS.md requires announcing UTC stop time for fixed durations and terminating work immediately if short timeboxes are exceeded; manual verification logged in docs/TEST_LOG.md.
+- [x] M36 (REQ-041): Hard-code working CLI tool invocations in run-all-tests static analysis.
+  - Exit criteria: static tool commands in harness.py match the verified working CLI invocations (ruff/black/isort/pyre/bandit/safety/etc.); verification logged in docs/TEST_LOG.md.
+  - Evidence: docs/TEST_LOG.md (2025-12-27T06:01:09Z).
+- [x] M37 (REQ-042): Add per-tool static CLI flags and verify one-at-a-time runs.
+  - Exit criteria: harness CLI exposes per-tool flags (e.g., --pyre) and each static tool runs individually; verification logged in docs/TEST_LOG.md.
+  - Evidence: docs/TEST_LOG.md (2025-12-27T06:36:07Z).
+- [x] M38 (REQ-043): Add recommended non-Python scanners and static tools.
+  - Exit criteria: shellcheck/shfmt/hadolint/detect-secrets/check-jsonschema added to static tool list and CLI flags; dependencies installed in requirements/Dockerfile; verification logged in docs/TEST_LOG.md.
+  - Evidence: docs/TEST_LOG.md (2025-12-27T07:08:46Z).
+- [x] M39 (REQ-044): Add Python static tools pip-check, pipdeptree, and pydoclint.
+  - Exit criteria: tools added to static tool list + CLI flags; dependencies installed in requirements.txt; per-tool CLI runs logged in docs/TEST_LOG.md.
+  - Evidence: docs/TEST_LOG.md (2025-12-27T07:22:43Z).
+- [x] M40 (REQ-045): Get --run-all-tests working end-to-end.
+  - Exit criteria: `python harness.py --run-all-tests` completes without error; verification logged in docs/TEST_LOG.md.
+  - Evidence: docs/TEST_LOG.md (2025-12-27T07:54:20Z, 2025-12-27T12:22:18Z).
+- [ ] M41 (REQ-046): Remove static-tool skips/ignores and fix the underlying findings.
+  - Exit criteria: tool configs no longer suppress checks (setup.cfg ignores, pyright missing-import/stub ignores, bandit/vulture skips, deptry per-rule ignores, pydocstyle/pydoclint relaxations, mccabe threshold adjustments); code changes eliminate resulting findings; verification logged per tool run in docs/TEST_LOG.md.
+  - Verification approach: run tools individually via `python harness.py --<tool>` after each suppression rollback; keep run-all-tests optional unless explicitly requested.
+  - Plan: inventory current suppressions → remove one tool's suppression set at a time → fix resulting issues → record per-tool reruns in TEST_LOG before moving to the next tool.
+  - Suppression inventory (current):
+    - setup.cfg: flake8/pycodestyle ignores (E203/E501/W503); mypy ignore_missing_imports.
+    - pyrightconfig.json: missing-import/stub suppression and basic mode.
+    - harness.py: pydocstyle ignore list; bandit severity/confidence filter + skip list; vulture min-confidence/exclude; deptry per-rule ignores + excludes; pydoclint relaxed checks; interrogate fail-under 0; mccabe min threshold; detect-secrets exclude.
+- [ ] M42 (REQ-047): Fix bullet marker vertical alignment and verify via CLI-rendered PDFs + Vision.
+  - Exit criteria: Typst bullet markers align visually with text; before/after PDFs compiled via CLI using stub DB; Vision review logged in docs/TEST_LOG.md.
+  - Verification approach: `MAX_COVERAGE_STUB_DB=1 python harness.py --compile-pdf <before/after>` and Vision review of rendered PNGs from the PDFs.
+- [ ] M43 (REQ-048): Center bullet glyphs on the text line center and confirm via CLI + Vision.
+  - Exit criteria: bullet center aligns with text line center in rendered PDFs; evidence recorded in docs/TEST_LOG.md.
+  - Verification approach: repeat CLI PDF renders with stub DB; review bullet alignment via Vision (and spot-check with pixel analysis if needed).
+  - Implementation approach: apply an intentionally extreme marker offset to prove vertical movement, then tune alignment to the text midline using cap-height or box-based alignment in lib.typ.
+- [x] M44 (REQ-049): Put LinkedIn and GitHub contact entries on the same line.
+  - Exit criteria: contact layout groups LinkedIn and GitHub in the same line in the header; manual verification logged in docs/TEST_LOG.md.
+  - Verification approach: manual review of Typst contact grouping logic; render PDF only if explicitly requested.
+  - Evidence: docs/TEST_LOG.md (2025-12-29T14:26:17Z).
+- [x] M45 (REQ-050): Recommend additional static Python tools to consider adding.
+  - Exit criteria: curated list of candidate tools with brief rationale delivered; manual verification logged in docs/TEST_LOG.md.
+  - Verification approach: manual review (no tests requested).
+- [x] M46 (REQ-051): Add pyanalyze and refurb to the static analysis suite and CLI flags.
+  - Exit criteria: pyanalyze/refurb wired into static tool lists, CLI flags added, dependencies installed; manual verification logged in docs/TEST_LOG.md.
+  - Verification approach: manual review (no tests requested).
+- [x] M47 (REQ-052): Hard-fail when a selected static tool is missing, even if the tool would otherwise be skipped.
+  - Exit criteria: static tool availability is checked before skip reasons so missing binaries/modules produce fail status; manual verification logged in docs/TEST_LOG.md.
+  - Verification approach: manual review (no tests requested).
+- [ ] M48 (REQ-053): Resolve pyanalyze/refurb findings so runs complete without warnings.
+  - Exit criteria: `python harness.py --pyanalyze` and `python harness.py --refurb` return ok; findings cleared without suppressions; verification logged in docs/TEST_LOG.md.
+  - Verification approach: run the two tools after each fix batch (no other tests unless requested).
+  - Status: blocked (user requested dropping pyanalyze; refurb remains active).
+- [x] M49 (REQ-054): Remove pyanalyze from the static analysis suite while keeping refurb enabled.
+  - Exit criteria: pyanalyze removed from static tool lists/CLI flags and requirements; refurb remains in static tools; documentation and ledgers updated; verification logged in docs/TEST_LOG.md.
+  - Verification approach: manual review only (run refurb only if explicitly requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-27T19:11:26Z).
+- [x] M50 (REQ-055): Upgrade the repo target/runtime to Python 3.14.
+  - Exit criteria: Dockerfile targets Python 3.14, Reflex pinned to a 3.14-compatible release, pyupgrade target flag updated, and docs reflect the new baseline; verification logged in docs/TEST_LOG.md.
+  - Verification approach: manual review only (tests run only if explicitly requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-27T19:29:57Z).
+- [x] M51 (REQ-056): Convert requirements.txt to environment.yaml.
+  - Exit criteria: environment.yaml exists with the full dependency list from requirements.txt; verification logged in docs/TEST_LOG.md.
+  - Verification approach: manual review only (tests run only if explicitly requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-27T19:47:40Z).
+- [x] M52 (REQ-057): Run each static tool individually, verify Reflex run, then run end-to-end tests.
+  - Exit criteria: each static tool CLI flag run recorded; Reflex coverage run completes; run-all-tests completes; evidence logged in docs/TEST_LOG.md.
+  - Verification approach: run tools via `python harness.py --<tool>` one at a time, `MAX_COVERAGE_STUB_DB=1 python harness.py --maximum-coverage --maximum-coverage-reflex`, then `python harness.py --run-all-tests`.
+  - Evidence: docs/TEST_LOG.md (2025-12-27T20:16:34Z, 2025-12-27T21:52:08Z).
+- [ ] M53 (REQ-058): Update Docker config to use Miniforge on Ubuntu 25.10.
+  - Exit criteria: Dockerfile uses ubuntu:25.10 base, installs Miniforge with pinned version, creates the conda env from environment.yaml, and keeps static tool/system dependencies working.
+  - Verification approach: manual review of Dockerfile changes (tests run only if explicitly requested).
+  - Status: blocked (superseded by REQ-070).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T06:15:31Z).
+- [x] M54 (REQ-059): Run a docker build to validate the new Ubuntu 25.10 + Miniforge Dockerfile.
+  - Exit criteria: docker build completes successfully with the updated base + conda env.
+  - Verification approach: run `docker build -t llm-harness:questing .` and log the result.
+  - Evidence: docs/TEST_LOG.md (2025-12-27T20:43:44Z).
+- [ ] M55 (REQ-060): Confirm whether Reflex run uses uv in production.
+  - Exit criteria: answer recorded based on repo evidence (manual review logged).
+  - Verification approach: manual review of repo references to uv.
+  - Status: blocked (superseded by REQ-061 after user clarification).
+  - Evidence: docs/TEST_LOG.md (2025-12-27T20:49:16Z).
+- [x] M56 (REQ-061): Confirm whether Reflex projects usually use uv in production (general guidance).
+  - Exit criteria: answer recorded based on general guidance; manual review logged.
+  - Verification approach: manual review (no tests requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-27T20:49:16Z).
+- [ ] M57 (REQ-062): Restore maximum-coverage results after the Python 3.14 upgrade.
+  - Exit criteria: Reflex coverage is forced to capture coverage data; maximum-coverage summary returns to >90% coverage for harness.py; confirmation test (`python harness.py --run-all-tests`) completes and is logged; detached HEAD worktree created for before/after inspection.
+  - Verification approach: run `python harness.py --run-all-tests`, capture coverage summary in `maxcov_logs/maximum_coverage.summary.txt`, and log results in docs/TEST_LOG.md.
+  - Latest results: current repo run-all-tests PASS; coverage 82% (harness.py) with static analysis report + diagram generation OK; HEAD clone run-all-tests FAIL with static analysis "no report" and pyan ast.Num error; coverage 56%.
+  - Investigation note: maxcov extras now reach "static analysis start" and complete; remaining gap to >90% coverage likely tied to uncovered blocks added after the upgrade.
+  - Plan: diff missing coverage blocks vs prior baseline, target the largest missing blocks, and add/adjust maxcov extras to execute them; rerun `python harness.py --run-all-tests` after each fix and update REQ-062 evidence in docs/TEST_LOG.md, docs/REQUIREMENTS.md, docs/FEATURES.json, and docs/AGENT_STATE.md.
+- [ ] M58 (REQ-063): Switch Dockerfile conda env creation to mamba.
+  - Exit criteria: Dockerfile uses `mamba env create -f environment.yaml` and cleans conda caches.
+  - Verification approach: manual review of Dockerfile change (tests run only if explicitly requested).
+  - Status: blocked (superseded by REQ-070).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T06:15:31Z).
+- [ ] M59 (REQ-064): Use the base conda environment in the Dockerfile and avoid conda updates when using mamba.
+  - Exit criteria: Dockerfile uses the base conda environment (no llm-harness PATH override) and avoids conda updates.
+  - Verification approach: manual review of Dockerfile change (tests run only if explicitly requested).
+  - Status: blocked (superseded by REQ-070).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T06:15:31Z).
+- [ ] M60 (REQ-065): Replace the base-env update command with a base-env creation approach that avoids the Python 3.14 solver conflict.
+  - Exit criteria: Dockerfile uses `mamba env create -p ${CONDA_DIR} -f environment.yaml --force`, retains the Miniforge installer script, and avoids conda updates.
+  - Verification approach: manual review of Dockerfile change (tests run only if explicitly requested).
+  - Status: blocked (superseded by REQ-070).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T06:15:31Z).
+- [ ] M61 (REQ-066): Use the Miniforge latest-download installer URL (uname-based) since multi-arch builds are not required.
+  - Exit criteria: Dockerfile uses `https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh` with the installer script and keeps the base env setup.
+  - Verification approach: manual review of Dockerfile change (tests run only if explicitly requested).
+  - Status: blocked (superseded by REQ-070).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T06:15:31Z).
+- [ ] M62 (REQ-067): Update Dockerfile to use base env update with mamba.
+  - Exit criteria: Dockerfile uses `mamba env update -n base -f environment.yaml` (base env update) instead of creating a new env.
+  - Verification approach: manual review of Dockerfile change (tests run only if explicitly requested).
+  - Status: blocked (superseded by REQ-070).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T06:15:31Z).
+- [ ] M63 (REQ-068): Keep mamba in the base env during the update.
+  - Exit criteria: environment.yaml pins mamba so `mamba env update -n base -f environment.yaml` retains it.
+  - Verification approach: manual review of environment.yaml change (tests run only if explicitly requested).
+  - Status: blocked (superseded by REQ-070).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T06:15:31Z).
+- [ ] M64 (REQ-069): Keep conda in the base env during the update.
+  - Exit criteria: environment.yaml pins conda and Dockerfile no longer uses `--prune` when updating the base env.
+  - Verification approach: manual review of environment.yaml and Dockerfile changes (tests run only if explicitly requested).
+  - Status: blocked (superseded by REQ-070).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T06:15:31Z).
+- [x] M65 (REQ-070): Use python:latest and pip install requirements.txt in the Dockerfile.
+  - Exit criteria: Dockerfile uses `python:latest`, installs requirements with pip, and removes Miniforge/conda setup.
+  - Verification approach: manual review of Dockerfile change (tests run only if explicitly requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T06:15:31Z).
+- [x] M66 (REQ-071): Confirm Playwright Python image Python version availability.
+  - Exit criteria: verify whether Playwright's python image includes Python 3.14; record findings in docs/TEST_LOG.md.
+  - Verification approach: manual check of `mcr.microsoft.com/playwright/python` tags/metadata (no tests requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T06:33:11Z).
+- [x] M67 (REQ-072): Clarify Neo4j container implications for the Docker/Compose setup.
+  - Exit criteria: document that Neo4j remains a separate service image in docker-compose and is unaffected by the app base image choice.
+  - Verification approach: manual review (no tests requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T06:35:23Z).
+- [x] M68 (REQ-073): Provide guidance for adopting new Python 3.13/3.14 idioms and features.
+  - Exit criteria: outline tooling and workflow updates to adopt new language idioms; record guidance in docs/TEST_LOG.md.
+  - Verification approach: manual review (no tests requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T06:40:34Z, 2025-12-28T07:13:38Z).
+- [x] M69 (REQ-074): Enhance harness.py to use Python 3.14 features.
+  - Exit criteria: harness.py uses Python 3.14-specific syntax (PEP 758 multi-except without parentheses) in applicable handlers; manual verification logged.
+  - Verification approach: manual review (no tests requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T07:50:22Z).
+- [x] M70 (REQ-075): Expand harness.py adoption of Python 3.14 features beyond minimal usage.
+  - Exit criteria: harness.py integrates t-strings (PEP 750), annotationlib for deferred annotation introspection (PEP 649/749), compression.zstd usage (PEP 784), and applies PEP 758 syntax wherever applicable; manual verification logged.
+  - Verification approach: manual review (no tests requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T08:18:09Z).
+- [x] M71 (REQ-076): Continue expanding harness.py adoption of Python 3.14 features.
+  - Exit criteria: harness.py uses concurrent interpreter APIs (PEP 734) in a safe, opt-in path, adds additional t-string usage where rendered correctly, and compiles cleanly via `python -m py_compile harness.py`.
+  - Verification approach: run `python -m py_compile harness.py` and manual review (no other tests requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T08:50:38Z).
+- [x] M72 (REQ-077): Run static analysis tools concurrently using the interpreters API.
+  - Exit criteria: `_run_static_analysis_tools` dispatches each static tool via `InterpreterPoolExecutor` with a dedicated interpreter job (including pyupgrade) and preserves report ordering/format.
+  - Verification approach: manual review of harness.py changes (tests only if explicitly requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T09:57:48Z).
+  - Implementation note: interpreter workers must avoid module-level globals (not shareable) and use local imports + JSON payloads.
+- [x] M73 (REQ-078): Paste clipboard content and run the pipeline when the job requisition textarea is clicked.
+  - Exit criteria: job requisition textarea triggers clipboard read + pipeline handler on click; manual verification logged.
+  - Verification approach: manual review (tests not requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T13:54:33Z).
+- [x] M74 (REQ-079): List all declared function names in harness.py to confirm pipeline handlers.
+  - Exit criteria: function list captured and logged with evidence in docs/TEST_LOG.md.
+  - Verification approach: manual review (tests not requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T13:54:33Z).
+- [x] M75 (REQ-080): Add ui-playwright-check coverage for the textarea click-to-paste pipeline.
+  - Exit criteria: ui-playwright-check exercises clicking the job requisition textarea and verifies clipboard paste + pipeline completion; manual verification logged.
+  - Verification approach: manual review (tests not requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T14:16:54Z).
+- [x] M76 (REQ-081): Ensure ui-playwright-check selects a cheap LLM model (not gpt-5.2-pro).
+  - Exit criteria: model selection in the UI check prefers cheap models and fails if only gpt-5.2-pro is selected; manual verification logged.
+  - Verification approach: manual review (tests not requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T14:16:54Z).
+- [ ] M77 (REQ-082): Get `python harness.py --ui-playwright-check` working end-to-end.
+  - Exit criteria: ui-playwright-check completes successfully against a running Reflex app with a non-production Neo4j target; results logged in docs/TEST_LOG.md.
+  - Verification approach: run `python harness.py --ui-playwright-check` (confirm non-production DB, set URL as needed).
+  - Risks: UI check depends on clipboard permissions, LLM availability, and a running app server.
+  - Status: blocked by sudo password prompt during dockerized run-all-tests (docs/TEST_LOG.md 2025-12-28T14:33:47Z).
+- [x] M78 (REQ-083): Add a docker-only UI Playwright workflow (`python harness.py --ui-playwright-check-docker`).
+  - Exit criteria: CLI builds/starts the compose stack, seeds Neo4j with michael_scott_resume.json, runs ui_playwright_check against the running Reflex app, and tears down containers/logs.
+  - Verification approach: run `python harness.py --ui-playwright-check-docker` (non-production DB target confirmed).
+  - Risks: Docker health checks and UI timing may need retries; Playwright clipboard permissions required.
+  - Evidence: docs/TEST_LOG.md (2025-12-28T18:04:37Z).
+- [x] M79 (REQ-084): Remove stub database usage so Docker UI checks run against real Neo4j data.
+  - Exit criteria: MAX_COVERAGE_STUB_DB paths removed or disabled; docker UI workflow uses the real Neo4j service with Michael Scott data.
+  - Verification approach: run `python harness.py --ui-playwright-check-docker` and log results in docs/TEST_LOG.md.
+  - Risks: local runs without Neo4j will fail; docker start/seed timing must be reliable.
+  - Plan options:
+    - Option A: remove stub DB support entirely; all flows require real Neo4j.
+    - Option B: keep stub DB code but disable it in docker workflows; document that stub is deprecated.
+    - Option C: keep stub DB behind an explicit CLI flag; default to real Neo4j in all test workflows.
+  - Architect selection: Option A (remove stub DB support entirely).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T18:04:37Z).
+- [x] M80 (REQ-085): Add a docker-only UI test gate (`python harness.py --run-ui-tests`).
+  - Exit criteria: --run-ui-tests runs the UI Playwright flow in Docker (Neo4j + app only), logs output, and exits non-zero on failure.
+  - Verification approach: run `python harness.py --run-ui-tests` and log results in docs/TEST_LOG.md.
+  - Risks: docker compose environment parsing must pass the active LLM API key (Gemini default; OpenAI optional) into the container.
+  - Status: pipeline wait timed out at 45s; increased UI timeout defaults to 90s, rerun required.
+  - Status: temporary early-exit after click-to-paste enabled; fast app wait + runtime cap added.
+  - Evidence: docs/TEST_LOG.md (2025-12-28T18:28:21Z).
+- [x] M81 (REQ-086): Disallow LLM error bypasses in UI checks and fail fast on missing API keys.
+  - Exit criteria: UI check CLI errors on allow-llm-error flags, UI test runner fails fast without OPENAI_API_KEY, and LLM errors are never ignored.
+  - Verification approach: manual review of UI scripts + run `python harness.py --run-ui-tests` to validate no LLM error allowance.
+  - Risks: missing API keys will halt UI runs; update documentation if needed.
+- [x] M82 (REQ-087): Add heartbeat logs to UI Playwright waits.
+  - Exit criteria: long waits (app load, data load, PDF, pipeline) emit periodic log lines to detect stalls.
+  - Verification approach: manual review (tests only if explicitly requested).
+- [x] M83 (REQ-088): Add fine-grained paste-on-click logging early in UI checks.
+  - Exit criteria: UI check logs clipboard write/read status, input event counts, and field value evolution within seconds of test start; paste-on-click failures surface in logs immediately.
+  - Verification approach: run `python harness.py --ui-playwright-check-docker` and inspect logs for paste-click trace.
+  - Evidence: docs/TEST_LOG.md (2025-12-28T18:04:37Z).
+- [x] M84 (REQ-089): Temporarily stop UI Playwright checks after the click-to-paste validation.
+  - Exit criteria: ui_playwright_check exits immediately after the click-to-paste step (success or failure) with a log line noting the early stop.
+  - Verification approach: manual review (tests not requested).
+  - Risks: reduced UI coverage until the full flow is restored.
+  - Evidence: docs/TEST_LOG.md (2025-12-28T18:12:29Z).
+- [x] M85 (REQ-090): Refresh the LLM chooser with a static list of valid gpt-5.2* model ids and include the latest GPT-5 mini model.
+  - Exit criteria: DEFAULT_LLM_MODELS includes only valid gpt-5.2* ids + latest gpt-5-mini; invalid entries removed; UI cheap list avoids invalid models.
+  - Verification approach: manual review (tests not requested).
+  - Risks: model lists can drift; update the static list periodically.
+  - Evidence: docs/TEST_LOG.md (2025-12-28T19:16:35Z).
+- [x] M86 (REQ-091): Refresh the Gemini model list and make a Gemini 3 model the default.
+  - Exit criteria: DEFAULT_LLM_MODELS starts with a gemini-3 model and includes the refreshed Gemini list; UI cheap list prefers Gemini models.
+  - Verification approach: manual review (tests not requested).
+  - Risks: preview model IDs may change; use the latest published names and update if Gemini deprecates previews.
+  - Evidence: docs/TEST_LOG.md (2025-12-28T19:16:35Z).
+- [x] M87 (REQ-092): Load Gemini API keys from ~/geminikey.txt by default and wire Docker UI runs to use it.
+  - Exit criteria: load_gemini_api_key reads ~/geminikey.txt, error messaging references the new path, and docker UI scripts load GEMINI_API_KEY by default.
+  - Verification approach: manual review (tests not requested).
+  - Risks: mixed key file formats could cause parsing mismatches; keep parsing rules documented.
+  - Evidence: docs/TEST_LOG.md (2025-12-28T19:16:35Z).
+- [x] M88 (REQ-093): Restore full UI Playwright coverage after click-to-paste.
+  - Exit criteria: ui_playwright_check no longer exits early by default after click-to-paste; full UI flow runs unless UI_STOP_AFTER_PASTE=1 is explicitly set.
+  - Verification approach: manual review (tests not requested).
+  - Risks: longer UI runs may exceed strict runtime caps; adjust UI_MAX_RUNTIME if needed.
+  - Evidence: docs/TEST_LOG.md (2025-12-28T19:25:00Z).
+- [x] M89 (REQ-094): Tune UI_MAX_RUNTIME based on measured --run-ui-tests runtime.
+  - Exit criteria: run `python harness.py --run-ui-tests`, record actual runtime, and set UI_MAX_RUNTIME default to runtime + ~2 minutes.
+  - Verification approach: run `python harness.py --run-ui-tests` against the dockerized Neo4j flow and log the measured duration.
+  - Risks: docker build/cache variance may skew measured runtime; rerun if the UI run exceeds a few minutes or fails.
+  - Evidence: docs/TEST_LOG.md (2025-12-28T19:43:18Z).
+- [x] M90 (REQ-095): Confirm --run-all-tests completes successfully.
+  - Exit criteria: `python harness.py --run-all-tests` completes without error; results logged in docs/TEST_LOG.md.
+  - Status: completed.
+  - Implementation note: treat Reflex log warnings as non-fatal so run-all-tests exit reflects true failures only.
+  - Verification approach: run `python harness.py --run-all-tests` and capture the outcome + duration in docs/TEST_LOG.md.
+  - Risks: docker resets can be destructive; runtime is longer (~8 minutes); ensure active log monitoring and stop if the run exceeds a few minutes without progress.
+- [x] M91 (REQ-096): Measure run-all-tests runtime and set default max runtime.
+  - Exit criteria: run-all-tests duration measured via maxcov summary; default max runtime set to measured seconds + 120s and enforced; evidence logged in docs/TEST_LOG.md.
+  - Status: completed.
+  - Implementation note: add a RUN_ALL_TESTS_MAX_RUNTIME guard in scripts/run_maxcov_e2e.sh or harness.py.
+  - Verification approach: run `python harness.py --run-all-tests`, capture duration from maxcov_logs/maximum_coverage.summary.txt, update default.
+  - Risks: docker build variability can increase runtime; ensure the measured run completes before updating the cap.
+- [x] M92 (REQ-097): Scrub user PII and verbatim user messages from repo logs.
+  - Exit criteria: remove user-specific names and artifacts, redact verbatim requirement restatements in metadata logs, and confirm repo search shows no user PII references.
+  - Verification approach: manual review plus `rg -n -i "<user PII patterns redacted>" -S .` and spot checks of docs/AGENT_STATE.md.
+  - Risks: redaction may remove useful historical context; retain REQ IDs and summaries to preserve traceability.
+  - Evidence: docs/TEST_LOG.md (2025-12-28T21:52:45Z).
+- [x] M93 (REQ-098): Delete and recreate the GitHub repo via tools/github_bootstrap.py, then push the sanitized contents.
+  - Exit criteria: `python tools/github_bootstrap.py --delete --yes --owner <redacted> --repo llm-harness` completes, repo recreated, sanitized content pushed with a clean history.
+  - Verification approach: bootstrap script output and `git push` success recorded in docs/TEST_LOG.md.
+  - Risks: deletion is irreversible; ensure local repo is intact and sanitized before running the delete.
+  - Evidence: docs/TEST_LOG.md (2025-12-28T21:50:02Z, 2025-12-28T21:52:45Z).
+- [x] M94 (REQ-099): Revert the Gemini completion usage-metadata workaround.
+  - Exit criteria: Gemini completion calls return to the pre-workaround code path; no new usage-metadata patch logic remains in harness.py.
+  - Verification approach: manual review (tests not requested).
+  - Risks: reverts the guard that protected against null completion token counts; users may still hit the original error.
+  - Evidence: docs/TEST_LOG.md (2025-12-28T22:15:38Z).
+- [x] M95 (REQ-100): Harden LLM JSON extraction and verify via UI tests.
+  - Exit criteria: LLM output parsing tolerates wrapper text and still extracts a valid JSON object; Stage 1 profile generation completes without non-JSON errors.
+  - Verification approach: run `python harness.py --run-ui-tests` and record results in docs/TEST_LOG.md.
+  - Risks: JSON recovery may accept malformed output; keep parsing strict to dict objects only.
+  - Evidence: docs/TEST_LOG.md (2025-12-29T02:59:37Z).
+- [x] M96 (REQ-101): Retry LLM calls when JSON output is rejected.
+  - Exit criteria: non-JSON LLM output triggers up to N configurable retries before returning an error.
+  - Verification approach: manual review (tests not requested).
+  - Risks: retries can increase latency/cost; keep default attempts bounded.
+  - Evidence: docs/TEST_LOG.md (2025-12-29T03:09:38Z).
+- [x] M97 (REQ-102): Strengthen JSON retry handling for gemini-3-pro-preview.
+  - Exit criteria: JSON retries add corrective prompt guidance and use a higher default retry count for Gemini.
+  - Verification approach: manual review (tests not requested).
+  - Risks: additional retries increase latency and cost; keep defaults configurable.
+  - Evidence: docs/TEST_LOG.md (2025-12-29T03:23:43Z).
+- [x] M98 (REQ-103): Ensure --run-ui-tests honors the user-selected LLM model.
+  - Exit criteria: UI model selection prefers env-provided LLM_MODEL/OPENAI_MODEL before fallback models; run_ui_tests defaults to gemini-3-pro-preview when unset; logs show chosen model.
+  - Verification approach: manual review (tests not requested).
+  - Risks: env configuration may point to expensive models; keep the gpt-5.2-pro guard intact.
+  - Evidence: docs/TEST_LOG.md (2025-12-29T03:47:03Z).
+- [x] M99 (REQ-104): Re-measure --run-ui-tests runtime for gemini-3-pro-preview and update UI_MAX_RUNTIME.
+  - Exit criteria: run_ui_tests duration measured with gemini-3-pro-preview; UI_MAX_RUNTIME set to measured runtime + 120s; evidence logged in docs/TEST_LOG.md.
+  - Verification approach: run `time -p LLM_MODEL=gemini:gemini-3-pro-preview python harness.py --run-ui-tests` and capture the `real` duration.
+  - Risks: longer model latency may require raising UI timeouts; adjust defaults only after a passing run.
+  - Evidence: docs/TEST_LOG.md (2025-12-29T13:56:36Z).
+- [x] M100 (REQ-105): Add a standalone any-llm probe for prompt.yaml + req.txt on gemini-3-pro-preview.
+  - Exit criteria: new script calls any-llm with prompt.yaml + req.txt, logs response details, and reports JSON parse success/failure.
+  - Verification approach: run `python scripts/any_llm_prompt_probe.py --model gemini:gemini-3-pro-preview` and record result in docs/TEST_LOG.md.
+  - Risks: model latency or API key misconfigurations can block the probe; log failures clearly.
+  - Evidence: docs/TEST_LOG.md (2025-12-29T04:21:20Z).
+- [x] M101 (REQ-106): Resolve Stage 1 non-JSON failures for gemini-3-pro-preview in UI pipeline.
+  - Exit criteria: Stage 1 completes for gemini-3-pro-preview; generate_resume_content returns JSON without CompletionUsage validation errors; UI no longer reports "Model returned non-JSON output".
+  - Implementation checklist:
+    - [x] Apply Gemini usage-metadata coercion before the first completion call and re-open the event loop for retries.
+    - [x] On CompletionUsage validation or closed-loop errors, retry once with a fresh AnyLLM client.
+    - [x] Align the any-llm probe retry path to use the same usage-metadata coercion (if probe runs are part of verification).
+    - [x] Increase UI pipeline timeouts for gemini-3-pro-preview so Stage 1 has time to complete (UI timeout/runtime defaults or model-specific overrides).
+    - [x] Raise Gemini output token default (or ignore low LLM_MAX_OUTPUT_TOKENS override) to avoid empty choices responses with max_tokens=2048.
+    - [x] Include stop-list hit details in retry prompt so Gemini can avoid the specific banned phrases.
+    - [x] Increase stop-list retry attempts for Gemini if retries still return banned phrases.
+    - [x] Strip stop-list phrases from the prompt inputs (resume/job req) to reduce repeated violations.
+    - [x] As a last-resort, sanitize stop-list phrases from the parsed output if retries still fail.
+  - Verification approach: run `python harness.py --run-ui-tests` and confirm the pipeline completes without Stage 1 errors.
+  - Evidence: docs/TEST_LOG.md (2025-12-29T13:47:13Z).
+  - Risks: adding coercion may mask upstream usage-metadata bugs; keep the patch scoped to Gemini completion paths only.
+- [x] M103 (REQ-108): Log Stage 1 LLM JSON output for inspection.
+  - Exit criteria: when `LLM_LOG_JSON_OUTPUT=1`, Stage 1 writes JSON output to `maxcov_logs/llm_json_output_generate_profile_latest.json` (or the configured log dir), and the JSON is inspected during verification.
+  - Verification approach: run `python harness.py --run-ui-tests`, then inspect the JSON log file for expected keys/content.
+  - Risks: logs can include sensitive resume content; keep logging opt-in outside test runs.
+  - Evidence: docs/TEST_LOG.md (2025-12-29T13:47:13Z).
+- [x] M102 (REQ-107): Add extremely fine-grained logging to any_llm_prompt_probe.py for debugging.
+  - Exit criteria: probe logs detailed timing, request/response metadata, and error traces without exposing API keys.
+  - Verification approach: run `python scripts/any_llm_prompt_probe.py --model gemini:gemini-3-pro-preview` and confirm logs show the new details; record evidence in docs/TEST_LOG.md.
+  - Risks: increased log verbosity may expose prompt/resume content; keep logs to lengths and metadata only.
+  - Evidence: docs/TEST_LOG.md (2025-12-29T12:30:26Z).
+- [x] M104 (REQ-109): Add a cache-busting Generate PDF button in the UI.
+  - Exit criteria: UI includes a dedicated cache-busting PDF button; handler bypasses cached in-memory/on-disk reuse and forces a fresh render; verification logged.
+  - Dependencies: harness.py State cache logic and UI button row.
+  - Risks: avoid breaking normal Generate PDF caching; ensure maxcov monkeypatches remain unaffected.
+  - Verification approach: manual review (tests not requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-29T14:41:24Z).
+- [x] M105 (REQ-110): Shorten the cache-busting PDF button label to fit the button.
+  - Exit criteria: cache-busting PDF button label fits on a single line without truncation.
+  - Dependencies: harness.py UI button row.
+  - Risks: label change must remain clear to users.
+  - Verification approach: manual review (tests not requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-29T14:56:09Z).
+- [x] M106 (REQ-111): Keep LinkedIn/GitHub contacts together when GitHub is a non-github.com URL.
+  - Exit criteria: GitHub custom URL renders as a GitHub contact item and stays grouped with LinkedIn on one line.
+  - Dependencies: generate_typst_source author fields and lib.typ contact grouping.
+  - Risks: avoid duplicating GitHub entries in custom contacts; ensure link targets stay correct.
+  - Verification approach: manual review (tests not requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-29T14:56:09Z).
+- [x] M107 (REQ-112): Keep Generate Profile/PDF button labels on a single line.
+  - Exit criteria: both button labels render on one line without wrapping.
+  - Dependencies: harness.py UI button row.
+  - Risks: ensure labels remain legible at smaller widths.
+  - Verification approach: manual review (tests not requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-29T15:02:56Z).
+- [x] M108 (REQ-113): Keep Refresh PDF button label on a single line.
+  - Exit criteria: Refresh PDF label renders on one line without wrapping.
+  - Dependencies: harness.py UI button row.
+  - Risks: label may truncate if the button row shrinks.
+  - Verification approach: manual review (tests not requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-29T15:10:37Z).
+- [x] M109 (REQ-114): Remove the separate Include Skills section toggle in the UI.
+  - Exit criteria: Include Skills toggle removed; skills visibility controlled via Section order checkbox; UI checks updated to use Section order.
+  - Dependencies: harness.py UI layout and scripts/ui_playwright_check.py.
+  - Risks: ensure skills section remains toggleable and PDF snapshots still cover skills on/off.
+  - Verification approach: manual review (tests not requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-29T15:14:13Z).
+- [x] M110 (REQ-115): Align Auto-fit/Pages with the Rewrite bullets toggle.
+  - Exit criteria: Auto-fit + Pages controls render on the same line as the Rewrite bullets with LLM toggle.
+  - Dependencies: harness.py UI layout.
+  - Risks: layout may crowd on narrow widths; keep controls readable.
+  - Verification approach: manual review (tests not requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-29T15:18:19Z).
+- [x] M111 (REQ-116): Remove Paste & Run / Run Pipeline buttons.
+  - Exit criteria: Job Requisition header no longer shows Paste & Run or Run Pipeline; UI checks updated to avoid clicking them.
+  - Dependencies: harness.py UI layout and scripts/ui_playwright_check.py.
+  - Risks: pipeline trigger still available via job requisition click; ensure status hint text updated.
+  - Verification approach: manual review (tests not requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-29T15:27:02Z).
+- [x] M112 (REQ-117): Update primary action button colors to a cohesive professional palette.
+  - Exit criteria: Save/Load/Generate Profile/Generate PDF/Refresh PDF buttons use a muted, consistent color scheme.
+  - Dependencies: harness.py UI button row.
+  - Risks: reduced color contrast might make buttons feel less distinct; keep labels clear.
+  - Verification approach: manual review (tests not requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-29T15:31:17Z).
+- [x] M113 (REQ-118): Add a Profile chooser with date/time, company, and role labels.
+  - Exit criteria: Profile selector lists recent profiles with date/time, company, and role; selecting a profile updates the Load Data target.
+  - Dependencies: harness.py State profile list and UI select.
+  - Risks: long labels may wrap; consider truncation if it crowds the layout.
+  - Verification approach: manual review (tests not requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-29T15:57:21Z).
+- [x] M114 (REQ-119): Match Profile chooser width to the Model chooser width.
+  - Exit criteria: Profile selector width aligns with Model selector width in the Job Requisition panel.
+  - Dependencies: harness.py UI select layout.
+  - Risks: width changes may affect label truncation on narrow layouts.
+  - Verification approach: manual review (tests not requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-29T16:03:30Z).
+- [x] M115 (REQ-120): Keep the Profile chooser within the app's right edge.
+  - Exit criteria: Profile selector stays within the app container without overflowing to the right.
+  - Dependencies: harness.py UI select trigger styling.
+  - Risks: long labels may require truncation; ensure readability.
+  - Verification approach: manual review (tests not requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-29T16:05:36Z).
+- [x] M116 (REQ-121): Keep the Profile chooser within the app container for long labels.
+  - Exit criteria: Profile selector no longer overflows the right edge even with long profile labels.
+  - Dependencies: harness.py UI select root/trigger sizing and overflow handling.
+  - Risks: truncation may obscure context; consider tooltips if needed.
+  - Verification approach: manual review (tests not requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-29T16:10:05Z).
+- [ ] M117 (REQ-122): Replace the Profile chooser with Dynoselect.
+  - Exit criteria: Profile chooser uses Dynoselect with search and preserves selection behavior.
+  - Dependencies: harness.py UI component and requirements.txt dependency.
+  - Risks: component styling may diverge; ensure width and overflow constraints remain.
+  - Verification approach: manual review (tests not requested).
+  - Status: blocked (superseded by Select2 request).
+- [x] M118 (REQ-123): Replace the Profile chooser with Select2.
+  - Exit criteria: Profile chooser uses Select2 with search and maintains selected Profile behavior.
+  - Dependencies: harness.py UI component, requirements.txt dependency, Select2 assets.
+  - Risks: custom JS integration may drift with Reflex updates; ensure init is resilient.
+  - Verification approach: manual review (tests not requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-29T17:05:24Z).
+- [x] M119 (REQ-124): Default to top 100 and enable full Profile search.
+  - Exit criteria: Profile chooser shows top 100 most recent by default and supports search across all Profiles via Neo4j.
+  - Dependencies: harness.py API transformer + Neo4j search query.
+  - Risks: search query could be slow at scale; add pagination and limits.
+  - Verification approach: manual review (tests not requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-29T17:05:24Z).
+- [x] M120 (REQ-125): Fix reflex run crash (FastAPI Query defaults).
+  - Exit criteria: `reflex run` no longer fails with Query default argument errors.
+  - Dependencies: harness.py FastAPI endpoint parameters.
+  - Risks: FastAPI compatibility changes may require additional parameter adjustments.
+  - Verification approach: run `reflex run` and confirm startup.
+  - Evidence: docs/TEST_LOG.md (2025-12-29T17:18:12Z).
+- [x] M121 (REQ-126): Run a basic reflex run smoke test.
+  - Exit criteria: `reflex run` starts without crashing; log the result in docs/TEST_LOG.md.
+  - Dependencies: local Reflex environment, harness.py app module.
+  - Risks: long-running server needs manual stop after startup confirmation.
+  - Verification approach: run `reflex run` and record outcome.
+  - Evidence: docs/TEST_LOG.md (2025-12-29T17:18:12Z).
+- [x] M122 (REQ-127): Fix Profile selector duplicate rendering and placeholder behavior.
+  - Exit criteria: only one Select2 control renders; placeholder shows; selection/search usable.
+  - Dependencies: harness.py Select2 markup + init script.
+  - Risks: Reflex re-rendering may orphan Select2 containers; clean up on init.
+  - Verification approach: browser DOM check + API response check.
+  - Evidence: docs/TEST_LOG.md (2025-12-29T18:04:39Z).
+- [x] M123 (REQ-128): Verify Profile selector fix with reflex run + DOM/API checks.
+  - Exit criteria: reflex run starts; DOM shows single Select2 container; /api/profile-search returns JSON.
+  - Dependencies: local Reflex environment and profile-search endpoint.
+  - Risks: Neo4j connectivity could block API response; log failures explicitly.
+  - Verification approach: run reflex, Playwright DOM check, and curl API.
+  - Evidence: docs/TEST_LOG.md (2025-12-29T18:04:39Z).
+- [x] M124 (REQ-129): Fix Select2 search errors so results load.
+  - Exit criteria: Select2 no longer shows "results could not be loaded"; search results appear.
+  - Dependencies: harness.py Select2 AJAX + backend CORS + env.json backend resolution.
+  - Risks: CORS misconfig or backend port changes could still block results.
+  - Verification approach: Playwright dropdown check with backend responses.
+  - Evidence: docs/TEST_LOG.md (2025-12-29T18:20:59Z).
+- [x] M125 (REQ-130): Verify Select2 search results load before/after typing.
+  - Exit criteria: dropdown shows results on open and after typing; no error message shown.
+  - Dependencies: reflex dev server and backend API.
+  - Risks: network latency could delay results; ensure wait for results before asserting.
+  - Verification approach: Playwright dropdown check + profile-search API call.
+  - Evidence: docs/TEST_LOG.md (2025-12-29T18:20:59Z).
+- [x] M126 (REQ-131): Match Profile chooser styling to the Model chooser.
+  - Exit criteria: Select2 profile selection box and text match the Model selector styling.
+  - Dependencies: harness.py Select2 CSS overrides + Radix theme variables.
+  - Risks: select2 CSS load order may override theme styles; use specificity/!important as needed.
+  - Verification approach: manual review (tests not requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-29T18:33:44Z).
+- [x] M127 (REQ-132): Load cached PDF on Profile selection; Refresh PDF uses selected Profile.
+  - Exit criteria: selecting a Profile hydrates UI and loads cached PDF (when available); Refresh PDF forces a re-render using the selected Profile.
+  - Dependencies: harness.py selection handler + load_resume_fields + PDF generation cache logic.
+  - Risks: job requisition mismatch check may block cached loads; ensure selected Profile job_req aligns with PDF generation.
+  - Verification approach: reflex run + Playwright selection/refresh check.
+  - Evidence: docs/TEST_LOG.md (2025-12-29T19:43:02Z).
+- [x] M128 (REQ-133): Scrub repo of user PII and update GitHub handle references.
+  - Exit criteria: repo no longer contains old GitHub handle; user paths scrubbed from docs; evidence logged.
+  - Dependencies: .github metadata, docs logs.
+  - Risks: over-scrubbing could remove useful provenance; keep changes scoped to user identifiers.
+  - Verification approach: rg scans for old handle and home-path references.
+  - Evidence: docs/TEST_LOG.md (2025-12-29T22:24:24Z).
+- [x] M129 (REQ-134): Delete and recreate the GitHub repo from scratch, then push a fresh history.
+  - Exit criteria: repo deleted and recreated via tools/github_bootstrap.py; origin updated; fresh main commit pushed successfully.
+  - Dependencies: GITHUB_PAT with delete_repo scope; tools/github_bootstrap_config.json.
+  - Risks: deletion is irreversible; missing PAT scopes or branch protections may block recreate/push.
+  - Verification approach: tools/github_bootstrap.py outputs completion; git push succeeds.
+  - Evidence: docs/TEST_LOG.md (2025-12-29T22:39:00Z).
+- [x] M130 (REQ-135): Remove non-distributable fonts and recreate the GitHub repo with a fresh history.
+  - Exit criteria: fonts removed from repo and ignored; repo deleted/recreated; fresh main commit pushed.
+  - Dependencies: GITHUB_PAT with delete_repo scope; tools/github_bootstrap_config.json.
+  - Risks: removing fonts may alter PDF output; deletion is irreversible.
+  - Verification approach: tools/github_bootstrap.py outputs completion; git push succeeds.
+  - Evidence: docs/TEST_LOG.md (2025-12-29T22:47:22Z).
+- [x] M131 (REQ-136): Restore local custom fonts outside git after repo recreation.
+  - Exit criteria: local fonts directory restored for development and remains ignored by git.
+  - Dependencies: local fonts archive; .gitignore.
+  - Risks: missing fonts may affect PDF output; ensure fonts are not re-added to git.
+  - Verification approach: manual check of fonts directory presence and git status clean.
+  - Evidence: docs/TEST_LOG.md (2025-12-30T07:15:39Z).
+- [x] M132 (REQ-137): Update AGENTS guidance to avoid verbatim user request capture.
+  - Exit criteria: AGENTS.md requires neutral summaries for requests and forbids verbatim quotes in state/requirement logs.
+  - Dependencies: AGENTS.md.
+  - Risks: existing logs may still contain verbatim request text; instruction change does not scrub history.
+  - Verification approach: manual review (tests not requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-30T10:24:17Z).
+- [x] M133 (REQ-138): Support <date> tags for bullet-level dates across sections.
+  - Exit criteria: <date>...</date> is parsed in any bullet text, pipe-delimited dates are no longer parsed, and date bullets render with the same layout as founder bullets.
+  - Dependencies: harness.py Typst rendering helpers.
+  - Risks: existing data using "||" will render literal pipes until updated.
+  - Verification approach: manual review (tests not requested).
+  - Evidence: docs/TEST_LOG.md (2025-12-30T10:35:53Z).
+- [x] M134 (REQ-139): Delete and recreate the GitHub repo via the bootstrap script.
+  - Exit criteria: tools/github_bootstrap.py deletes and recreates the repo successfully; outcome logged.
+  - Dependencies: tools/github_bootstrap.py, tools/github_bootstrap_config.json, GitHub PAT.
+  - Risks: deletion is irreversible; missing PAT scopes will block the recreate.
+  - Verification approach: run the bootstrap script with delete + create; record output in docs/TEST_LOG.md.
+  - Evidence: docs/TEST_LOG.md (2025-12-30T11:05:49Z).
+- [x] M135 (REQ-140): Recreate the repo with a clean Git history and push a fresh main branch.
+  - Exit criteria: new root commit exists; main force-pushed to the recreated repo; outcome logged.
+  - Dependencies: git CLI, remote origin configured.
+  - Risks: force push is destructive; ensure working tree reflects the intended state before push.
+  - Verification approach: create orphan commit and `git push -u origin main --force`; log commands.
+  - Evidence: docs/TEST_LOG.md (2025-12-30T11:12:34Z).
+- [x] M136 (REQ-141): Delete the remote repo, remove local .git, and recreate the repo from scratch.
+  - Exit criteria: remote deleted and recreated; local .git removed; new git init, initial commit, and pushed main.
+  - Dependencies: tools/github_bootstrap.py, tools/github_bootstrap_config.json, GitHub PAT, git CLI.
+  - Risks: deletion is irreversible; removing .git discards local metadata; push failures leave remote empty.
+  - Verification approach: run bootstrap delete + create and push the new main branch; log commands.
+  - Evidence: docs/TEST_LOG.md (2025-12-30T11:50:56Z).
+- [x] M137 (REQ-142): Add an on-demand script to delete the remote repo, remove local .git, recreate the repo, and push a fresh main branch.
+  - Exit criteria: script exists with documented usage and guardrails, uses bootstrap config, and can be run manually to perform the full reset.
+  - Dependencies: tools/github_bootstrap.py, tools/github_bootstrap_config.json, git CLI, GitHub PAT.
+  - Risks: destructive operations; accidental runs can wipe history and remote metadata.
+  - Verification approach: manual run of the script when requested; log skip if not run.
+  - Evidence: docs/TEST_LOG.md (2025-12-30T12:45:04Z).
+- [x] M138 (REQ-143): Remove the failing GitHub Action from the repo.
+  - Exit criteria: failing workflow is removed or disabled so it no longer triggers on push/PR.
+  - Dependencies: .github/workflows/ files.
+  - Risks: loss of CI coverage if the workflow is deleted; ensure this is acceptable.
+  - Verification approach: manual review of workflow config; tests not requested.
+  - Evidence: docs/TEST_LOG.md (2025-12-30T12:00:35Z).
+- [x] M139 (REQ-144): Rewrite README with a professional layout and top badges.
+  - Exit criteria: README.md replaced with a clean, real-project style document including a top badge strip with view counter and GitHub stats.
+  - Dependencies: README.md.
+  - Risks: badges rely on third-party services and may require public repo visibility.
+  - Verification approach: manual review of README content; tests not requested.
+  - Evidence: docs/TEST_LOG.md (2025-12-30T12:18:22Z).
+- [x] M140 (REQ-145): Assess README accuracy against the current repo and report discrepancies.
+  - Exit criteria: review completed with a clear mismatch list and references to relevant files.
+  - Dependencies: README.md, docs/CONFIGURATION.md, docs/TESTING.md, docs/LONG_RUN.md, harness.py, environment.yaml.
+  - Risks: incomplete review could miss drift between docs and behavior.
+  - Verification approach: manual review; tests not requested.
+  - Evidence: docs/TEST_LOG.md (2025-12-30T12:23:18Z).
+- [x] M141 (REQ-146): Rewrite README to best-in-class GitHub quality.
+  - Exit criteria: README.md updated with polished structure, accurate setup steps, and professional presentation.
+  - Dependencies: README.md, docs/CONFIGURATION.md, docs/TESTING.md, docs/LONG_RUN.md, environment.yaml.
+  - Risks: overpromising features or workflows that are not supported.
+  - Verification approach: manual review; tests not requested.
+  - Evidence: docs/TEST_LOG.md (2025-12-30T12:27:04Z).
+- [x] M142 (REQ-147): Review all documentation/logs and refine README accordingly.
+  - Exit criteria: documentation and LLM logs reviewed end-to-end; README updated to reflect any new facts or caveats.
+  - Dependencies: README.md, docs/, *.md, docs/AGENT_STATE.md, docs/TEST_LOG.md.
+  - Risks: missing a file leads to incomplete accuracy update.
+  - Verification approach: manual review; tests not requested.
+  - Evidence: docs/TEST_LOG.md (2025-12-30T12:36:59Z).
+- [x] M143 (REQ-148): Marketing-focused README rewrite.
+  - Exit criteria: README communicates clear positioning, outcomes, and credibility while staying accurate.
+  - Dependencies: README.md, docs/ARCHITECTURE.md, docs/TESTING.md, docs/LONG_RUN.md.
+  - Risks: marketing language could overpromise beyond actual capabilities.
+  - Verification approach: manual review; tests not requested.
+  - Evidence: docs/TEST_LOG.md (2025-12-30T12:40:59Z).
+- [ ] M144 (REQ-149): Execute the repo reset script to recreate the remote and clean local history.
+  - Exit criteria: scripts/recreate_repo.sh completes, remote repo recreated, and fresh main branch pushed.
+  - Dependencies: scripts/recreate_repo.sh, tools/github_bootstrap.py, GitHub PAT, git CLI.
+  - Risks: deletion is irreversible; local .git removal discards metadata.
+  - Verification approach: run scripts/recreate_repo.sh --yes and log commands.
+  - Evidence: pending.
+
+## Dependencies
+- Python tooling installed for all static analyzers in harness.py.
+- System packages for PDF inspection (pdftotext, mutool) and graphviz.
+- Network access for vulnerability scanners (pip-audit, safety).
+- Docker image must include run-all-tests dependencies.
+- Target Python version for pyupgrade: 3.14 (from runtime).
+- New resume asset JSON must match the expected import schema.
+- Neo4j service must be reachable for CLI import.
+- GitHub PAT with repo admin/delete permissions for bootstrap script.
+
+## Risks
+- Vulnerability scanners may require API keys or network connectivity.
+- pyupgrade may modify files if not isolated.
+- run-all-tests is long; failures must be fixed before completion.
+- Diagram generation tools can fail if system dependencies are missing.
+- Expanded resume content may affect PDF length; ensure UI/PDF tests still pass.
+- Import guardrails must not block intended CLI usage for new users with empty DBs.
+- Neo4j may be unavailable or already populated, blocking import without explicit overwrite.
+- Rasterized text color must stay in sync with summary tail color to avoid mismatched styling.
+- Escaping < and > must not break inline <b> tag handling.
+- Bullet leading changes may affect auto-fit PDF pagination; verify via before/after PDFs.
+- Stop-list enforcement may trigger multiple LLM calls and increased prompt size; ensure retries are bounded.
+- Removing pytype may require updating static analysis expectations or docs that reference pytype warnings.
+- Timebox policy now forbids early check-ins; mitigate delayed clarification by logging blockers and pivoting until the deadline.
+- Additional static tools may overlap with existing checks or extend run-all-tests duration; prioritize high-signal tooling.
+- New static tools may introduce new warnings; keep them as warn-only until REQ-046 cleans suppressions.
+- Python 3.14 base images or dependencies may lag; confirm availability and compatibility before running containerized tests.
+
+## Rollback
+- Revert harness.py, requirements.txt, Dockerfile, and scripts/run_maxcov_e2e.sh if run-all-tests fails after changes.

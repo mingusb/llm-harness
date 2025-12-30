@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Resume Payload",
+  "type": "object",
+  "required": [
+    "profile",
+    "experience",
+    "education",
+    "founder_roles",
+    "skills"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "profile": {
+      "type": "object",
+      "required": [
+        "id",
+        "name"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "first_name": {
+          "type": "string"
+        },
+        "last_name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "section_order": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "section_enabled": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "top_skills": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "experience": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "education": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "founder_roles": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  }
+}

@@ -1,0 +1,490 @@
+# REQUIREMENTS
+## Checklist
+Note: Do not record verbatim user messages in this file; track requirements by REQ ID and neutral summaries only.
+- [x] REQ-001: Add optional scanners (codespell, pip-audit, safety, pyupgrade) to the static analysis suite and include them in run-all-tests output.
+  - Files: harness.py, requirements.txt
+  - Notes: pyupgrade must not mutate working files; scanners should report failures if required tools are missing.
+- [x] REQ-002: Enforce that missing static analysis tools are not skipped (treat as failures).
+  - Files: harness.py
+  - Evidence: docs/TEST_LOG.md (2025-12-23T10:03:55Z)
+- [x] REQ-003: Remove pip-audit subprocess timeout (or otherwise ensure it does not time out).
+  - Files: harness.py
+  - Evidence: docs/TEST_LOG.md (2025-12-23T10:03:55Z)
+- [x] REQ-004: Run python harness.py --run-all-tests and record results.
+  - Files: docs/TEST_LOG.md, docs/AGENT_STATE.md
+  - Evidence: docs/TEST_LOG.md (2025-12-23T10:03:55Z)
+- [x] REQ-005: Ensure pytype does not time out during static analysis runs.
+  - Files: harness.py
+  - Evidence: docs/TEST_LOG.md (2025-12-23T10:03:55Z)
+- [x] REQ-006: Ensure diagram tooling is installed and diagrams are rendered into diagrams/ as part of the full test flow.
+  - Files: scripts/generate_diagrams.py, harness.py, requirements.txt, Dockerfile
+  - Evidence: docs/TEST_LOG.md (2025-12-23T10:03:55Z)
+- [x] REQ-007: Update scripts/run_maxcov_e2e.sh to run --run-all-tests and capture results from that flow.
+  - Files: scripts/run_maxcov_e2e.sh, scripts/run_maxcov.sh
+  - Evidence: docs/TEST_LOG.md (2025-12-23T10:22:27Z)
+- [x] REQ-008: Update Dockerfile to install all dependencies required by run-all-tests (UI, PDF, static tools, diagram generation).
+  - Files: Dockerfile, requirements.txt
+  - Evidence: docs/TEST_LOG.md (2025-12-23T10:22:27Z)
+- [x] REQ-009: Replace the legacy resume JSON with michael_scott_resume.json and update default asset references.
+  - Files: harness.py, michael_scott_resume.json
+  - Evidence: docs/TEST_LOG.md (2025-12-23T11:44:16Z)
+- [x] REQ-010: Seed full Michael Scott + David Brent resume data to exercise the resume builder (profile, skills, experience, education, founder roles, custom sections), using ASCII-only content.
+  - Files: michael_scott_resume.json
+  - Evidence: docs/TEST_LOG.md (2025-12-23T11:44:16Z)
+- [x] REQ-011: Ensure asset imports via CLI are safe for real users (do not overwrite existing resumes without explicit override) and document the import workflow.
+  - Files: harness.py, docs/CONFIGURATION.md
+  - Evidence: docs/TEST_LOG.md (2025-12-23T11:44:16Z)
+- [x] REQ-012: Keep dev/test runs isolated from user data (ephemeral or stub DB for test flows).
+  - Files: harness.py, scripts/run_maxcov.sh, docs/TESTING.md
+  - Evidence: docs/TEST_LOG.md (2025-12-23T11:44:16Z)
+- [x] REQ-013: Run python harness.py --run-all-tests and record results for the new resume asset changes.
+  - Files: docs/TEST_LOG.md, docs/AGENT_STATE.md
+  - Evidence: docs/TEST_LOG.md (2025-12-23T11:44:16Z)
+- [x] REQ-014: Compile the Michael Scott resume PDF using a stubbed DB and perform a vision review of the rendered output.
+  - Files: docs/TEST_LOG.md, docs/AGENT_STATE.md
+  - Evidence: docs/TEST_LOG.md (2025-12-23T11:53:38Z)
+- [x] REQ-015: Ensure long resume names (e.g., "Michael Gary Scott") render on a single line in Typst by adjusting header layout and layering.
+  - Files: lib.typ, docs/TEST_LOG.md, docs/AGENT_STATE.md
+  - Evidence: docs/TEST_LOG.md (2025-12-23T12:20:44Z)
+- [x] REQ-016: Convert the legacy resume PDF into a JSON asset that matches the import schema (profile, experience, education, founder_roles, skills).
+  - Files: legacy resume JSON asset (removed)
+  - Evidence: docs/TEST_LOG.md (2025-12-24T14:23:46Z)
+- [x] REQ-017: Import the legacy resume JSON into Neo4j using the CLI import flag and capture the outcome.
+  - Files: harness.py, docs/TEST_LOG.md
+  - Evidence: docs/TEST_LOG.md (2025-12-24T14:23:46Z)
+- [x] REQ-018: Run python harness.py --run-all-tests and record results for the legacy resume import flow.
+  - Files: docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/FEATURES.json
+  - Evidence: docs/TEST_LOG.md (2025-12-26T18:18:52Z)
+- [x] REQ-019: Render rasterized company description text using the summary tail color (SOFT_SECONDARY_FILL).
+  - Files: harness.py
+  - Evidence: docs/TEST_LOG.md (2025-12-26T18:18:52Z)
+- [x] REQ-020: Allow literal < and > in bullet fields by escaping them for Typst rendering.
+  - Files: harness.py
+  - Evidence: docs/TEST_LOG.md (2025-12-26T18:18:52Z)
+- [x] REQ-021: Increase bullet wrap leading to a medium amount for readability.
+  - Files: harness.py
+  - Evidence: docs/TEST_LOG.md (2025-12-25T16:25:28Z)
+- [x] REQ-022: Render before/after PDFs via CLI and perform a Vision comparison to confirm bullet leading improvement.
+  - Files: docs/TEST_LOG.md
+  - Evidence: docs/TEST_LOG.md (2025-12-25T16:25:28Z)
+- [x] REQ-023: Align Education date range formatting with Experience spacing (" - ").
+  - Files: harness.py
+  - Evidence: docs/TEST_LOG.md (2025-12-26T18:18:52Z)
+- [x] REQ-024: Update AGENTS.md to make tests optional and require explicit requests before running them.
+  - Files: AGENTS.md
+  - Evidence: docs/TEST_LOG.md (2025-12-26T01:50:59Z)
+- [x] REQ-025: Tighten test policy to forbid production DB runs and mirror optional-test gating in docs/TESTING.md.
+  - Files: AGENTS.md, docs/TESTING.md
+  - Evidence: docs/TEST_LOG.md (2025-12-26T01:57:28Z)
+- [x] REQ-026: Inject the stop-list into the LLM prompt and enforce stop-list filtering with retries so prompt output avoids stop-list terms.
+  - Files: harness.py, prompt.yaml, stop-list.txt
+  - Evidence: docs/TEST_LOG.md (2025-12-26T16:23:02Z)
+- [x] REQ-027: Improve the stop-list itself with added or refined forbidden phrases and cleaned duplication.
+  - Files: stop-list.txt
+  - Evidence: docs/TEST_LOG.md (2025-12-26T16:33:24Z)
+- [x] REQ-028: Expand the stop-list based on online research into high-tech resume buzzwords and management-speak cliches.
+  - Files: stop-list.txt
+  - Evidence: docs/TEST_LOG.md (2025-12-26T16:54:01Z)
+- [x] REQ-029: Update --run-all-tests to run the dockerized e2e flow (scripts/run_maxcov_e2e.sh --force), avoid recursion by adding a local runner, and support sudo password prompting via expect.
+  - Files: harness.py, scripts/run_maxcov.sh, scripts/run_maxcov_e2e.sh, docs/TESTING.md, README.md, docs/FEATURES.json
+  - Evidence: docs/TEST_LOG.md (2025-12-26T18:18:52Z)
+- [x] REQ-030: Fix warnings/errors reported by the run-all-tests static analysis suite.
+  - Files: harness.py, scripts/, tool configs, docs/TEST_LOG.md
+  - Status: complete; Evidence: docs/TEST_LOG.md (2025-12-27T05:18:58Z, 2025-12-27T05:47:19Z, 2025-12-27T08:27:28Z, 2025-12-27T12:22:18Z)
+  - Notes: container static tool reruns (codespell/pyright/pyre/semgrep/mccabe) now pass; run-all-tests rerun with all static tools OK.
+- [x] REQ-031: Document that Neo4j backups are not required when tests run in ephemeral containers.
+  - Files: docs/TESTING.md, README.md, docs/TEST_LOG.md
+  - Evidence: docs/TEST_LOG.md (2025-12-26T19:19:17Z)
+- [ ] REQ-032: Run pytype outside the container and debug until it completes successfully.
+  - Files: harness.py, docs/TEST_LOG.md
+  - Status: blocked (superseded by REQ-033); Evidence: docs/TEST_LOG.md (2025-12-26T20:56:53Z)
+- [x] REQ-033: Remove pytype from static analysis tooling and dependencies (deprecated).
+  - Files: harness.py, requirements.txt, docs/PLAN.md, docs/FEATURES.json, docs/TEST_LOG.md
+  - Evidence: docs/TEST_LOG.md (2025-12-26T21:03:20Z)
+- [x] REQ-034: Enhance AGENTS.md so that if an amount of time for the agent to work is specified, it is tracked and obeyed.
+  - Files: AGENTS.md, docs/TEST_LOG.md, docs/AGENT_STATE.md
+  - Evidence: docs/TEST_LOG.md (2025-12-27T01:56:46Z)
+- [x] REQ-035: Address the timebox enforcement risk by adding explicit tracking and check-in enforcement guidance.
+  - Files: AGENTS.md, docs/PLAN.md, docs/TEST_LOG.md, docs/AGENT_STATE.md
+  - Evidence: docs/TEST_LOG.md (2025-12-27T02:01:52Z)
+- [x] REQ-036: Address remaining timebox compliance risks with mandatory tracking fields and stop conditions.
+  - Files: AGENTS.md, docs/PLAN.md, docs/TEST_LOG.md, docs/AGENT_STATE.md
+  - Evidence: docs/TEST_LOG.md (2025-12-27T02:05:20Z)
+- [x] REQ-037: Update timebox guidance so autonomous runs do not request user input before the deadline.
+  - Files: AGENTS.md, docs/PLAN.md, docs/TEST_LOG.md, docs/AGENT_STATE.md
+  - Evidence: docs/TEST_LOG.md (2025-12-27T02:07:22Z)
+- [x] REQ-038: Clear all outstanding tasks now.
+  - Files: docs/REQUIREMENTS.md, docs/PLAN.md, docs/TEST_LOG.md, docs/AGENT_STATE.md
+  - Evidence: docs/TEST_LOG.md (2025-12-27T02:18:50Z)
+- [x] REQ-039: Ensure timebox guidance requires stopping work and terminating background tasks at the deadline.
+  - Files: AGENTS.md, docs/PLAN.md, docs/TEST_LOG.md, docs/AGENT_STATE.md
+  - Evidence: docs/TEST_LOG.md (2025-12-27T02:22:09Z)
+- [x] REQ-040: Update timebox guidance to announce stop time and handle short timebox overruns.
+  - Files: AGENTS.md, docs/PLAN.md, docs/TEST_LOG.md, docs/AGENT_STATE.md
+  - Evidence: docs/TEST_LOG.md (2025-12-27T02:23:34Z)
+- [x] REQ-041: Hard-code the working CLI tool invocations discovered into --run-all-tests.
+  - Files: harness.py, docs/TEST_LOG.md
+  - Evidence: docs/TEST_LOG.md (2025-12-27T06:01:09Z)
+  - Status: complete
+- [x] REQ-042: Add CLI flags to run each static tool individually and verify they run via harness CLI args.
+  - Files: harness.py, docs/TEST_LOG.md
+  - Evidence: docs/TEST_LOG.md (2025-12-27T06:36:07Z)
+  - Notes: tools executed one at a time via `python harness.py --<tool>`.
+- [x] REQ-043: Add recommended non-Python static tools and scanners (shellcheck, shfmt, hadolint, detect-secrets, check-jsonschema) to run-all-tests and CLI tooling, and install dependencies.
+  - Files: harness.py, Dockerfile, requirements.txt, docs/TEST_LOG.md, schemas/
+  - Evidence: docs/TEST_LOG.md (2025-12-27T07:08:46Z)
+- [x] REQ-044: Add Python static tools pip-check, pipdeptree, and pydoclint to run-all-tests and CLI tooling, and install dependencies.
+  - Files: harness.py, requirements.txt, docs/TEST_LOG.md
+  - Evidence: docs/TEST_LOG.md (2025-12-27T07:22:43Z)
+- [x] REQ-045: Get --run-all-tests working end-to-end in the current environment.
+  - Files: harness.py, scripts/run_maxcov_e2e.sh, scripts/run_maxcov.sh, Dockerfile, docs/TEST_LOG.md
+  - Evidence: docs/TEST_LOG.md (2025-12-27T07:54:20Z, 2025-12-27T12:22:18Z)
+- [ ] REQ-046: Remove static-tool skips/ignores and fix underlying findings so all tool checks pass without suppression.
+  - Files: harness.py, setup.cfg, pyrightconfig.json, requirements.txt, tools/, docs/TEST_LOG.md
+  - Evidence: pending
+- [ ] REQ-047: Adjust Typst bullet marker alignment so bullets align with text; render before/after PDFs via CLI with stub DB and confirm via Vision review.
+  - Files: lib.typ, docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/FEATURES.json
+  - Evidence: docs/TEST_LOG.md (2025-12-27T15:25:38Z)
+- [ ] REQ-048: Align bullet center to the text line center by raising text relative to bullet markers in Typst; verify via CLI-rendered PDFs and Vision review until centered.
+  - Files: harness.py, lib.typ, docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/FEATURES.json
+  - Notes: replace fixed marker offset with cap-height-centered alignment.
+  - Evidence: docs/TEST_LOG.md (2025-12-27T15:25:38Z)
+- [x] REQ-049: Ensure LinkedIn and GitHub contact entries render on the same line.
+  - Files: lib.typ, harness.py, docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/FEATURES.json
+  - Evidence: docs/TEST_LOG.md (2025-12-29T14:26:17Z)
+- [x] REQ-050: Provide recommendations for additional static Python tools to consider adding to the static analysis suite.
+  - Files: docs/REQUIREMENTS.md, docs/PLAN.md, docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/FEATURES.json
+  - Evidence: docs/TEST_LOG.md (2025-12-27T17:32:11Z)
+- [x] REQ-051: Add pyanalyze and refurb to the static analysis suite with CLI flags and dependencies.
+  - Files: harness.py, requirements.txt, docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/FEATURES.json
+  - Evidence: docs/TEST_LOG.md (2025-12-27T18:11:22Z, 2025-12-27T18:21:01Z)
+- [x] REQ-052: Fail static analysis when a selected tool is missing, even if the tool would otherwise be skipped.
+  - Files: harness.py, docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/FEATURES.json
+  - Evidence: docs/TEST_LOG.md (2025-12-27T18:11:22Z)
+- [ ] REQ-053: Resolve pyanalyze/refurb findings so their harness CLI runs complete without warnings.
+  - Files: harness.py, repo code, docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/FEATURES.json
+  - Status: blocked (request noted dropping pyanalyze; refurb remains active).
+  - Evidence: docs/TEST_LOG.md (2025-12-27T19:11:26Z)
+- [x] REQ-054: Remove pyanalyze from the static analysis suite while keeping refurb enabled.
+  - Files: harness.py, requirements.txt, docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/FEATURES.json
+  - Evidence: docs/TEST_LOG.md (2025-12-27T19:11:26Z)
+- [x] REQ-055: Upgrade the repo target/runtime to Python 3.14 (including Reflex compatibility updates).
+  - Files: Dockerfile, requirements.txt, harness.py, reflex.md, docs/PLAN.md, docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/FEATURES.json
+  - Evidence: docs/TEST_LOG.md (2025-12-27T19:29:57Z)
+- [x] REQ-056: Convert requirements.txt to environment.yaml (preserve dependency list).
+  - Files: environment.yaml, docs/PLAN.md, docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/FEATURES.json
+  - Evidence: docs/TEST_LOG.md (2025-12-27T19:47:40Z)
+- [x] REQ-057: Run each static tool individually via harness CLI args, verify Reflex run, then run end-to-end tests.
+  - Files: docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/PLAN.md, docs/FEATURES.json
+  - Evidence: docs/TEST_LOG.md (2025-12-27T20:16:34Z, 2025-12-27T21:52:08Z)
+- [ ] REQ-058: Update the Docker config to use Miniforge and Ubuntu 25.10 (questing).
+  - Files: Dockerfile, docs/PLAN.md, docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/FEATURES.json
+  - Status: blocked (superseded by REQ-070).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T06:15:31Z)
+- [ ] REQ-059: Run a docker build to validate the Ubuntu 25.10 + Miniforge Docker config.
+  - Files: docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/PLAN.md, docs/FEATURES.json
+  - Status: blocked (superseded by REQ-070).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T06:15:31Z)
+- [ ] REQ-060: Confirm whether Reflex run uses uv in production for this repo.
+  - Files: docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/PLAN.md, docs/FEATURES.json
+- Status: blocked (superseded by REQ-061 after user clarification).
+  - Evidence: docs/TEST_LOG.md (2025-12-27T20:49:16Z)
+- [x] REQ-061: Confirm whether Reflex projects usually use uv in production (general guidance).
+  - Files: docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/PLAN.md, docs/FEATURES.json
+  - Evidence: docs/TEST_LOG.md (2025-12-27T20:49:16Z)
+- [ ] REQ-062: Restore maximum-coverage results after the Python 3.14 upgrade (coverage dropped to ~43%) by ensuring Reflex coverage is captured, and run a confirmation test before marking fixed.
+  - Files: harness.py, docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/PLAN.md, docs/FEATURES.json
+  - Notes: create a detached worktree at HEAD for before/after comparison during investigation; latest run-all-tests PASS at 82% coverage, still below >90 target; HEAD clone run-all-tests failed with 56% coverage and pyan AST error.
+  - Evidence: docs/TEST_LOG.md (2025-12-28T04:48:02Z, 2025-12-28T04:54:12Z, 2025-12-28T06:40:34Z)
+- [ ] REQ-063: Use mamba to create the conda environment from environment.yaml in the Dockerfile.
+  - Files: Dockerfile, docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/PLAN.md, docs/FEATURES.json
+  - Status: blocked (superseded by REQ-070).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T06:15:31Z)
+- [ ] REQ-064: Use the base conda environment in the Dockerfile (no llm-harness env) and avoid conda updates when using mamba.
+  - Files: Dockerfile, docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/PLAN.md, docs/FEATURES.json
+  - Status: blocked (superseded by REQ-070).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T06:15:31Z)
+- [ ] REQ-065: Replace the base-env update command with a base-env creation approach that avoids the Python 3.14 solver conflict while keeping the Miniforge installer script.
+  - Files: Dockerfile, docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/PLAN.md, docs/FEATURES.json
+  - Status: blocked (superseded by REQ-070).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T06:15:31Z)
+- [ ] REQ-066: Use the Miniforge installer latest-download URL (uname-based) in the Dockerfile since multi-arch builds are not required.
+  - Files: Dockerfile, docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/PLAN.md, docs/FEATURES.json
+  - Status: blocked (superseded by REQ-070).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T06:15:31Z)
+- [ ] REQ-067: Update the Dockerfile to run `mamba env update -n base -f environment.yaml` (base env update, not a new env).
+  - Files: Dockerfile, docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/PLAN.md, docs/FEATURES.json
+  - Status: blocked (superseded by REQ-070).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T06:15:31Z)
+- [ ] REQ-068: Keep mamba available in the base env by pinning it in environment.yaml while using `mamba env update -n base`.
+  - Files: environment.yaml, docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/PLAN.md, docs/FEATURES.json
+  - Status: blocked (superseded by REQ-070).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T06:15:31Z)
+- [ ] REQ-069: Keep conda available in the base env by pinning it in environment.yaml and removing prune from the base env update.
+  - Files: environment.yaml, Dockerfile, docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/PLAN.md, docs/FEATURES.json
+  - Status: blocked (superseded by REQ-070).
+  - Evidence: docs/TEST_LOG.md (2025-12-28T06:15:31Z)
+- [x] REQ-070: Use python:latest as the Docker base image and install dependencies with pip from requirements.txt.
+  - Files: Dockerfile, requirements.txt, docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/PLAN.md, docs/FEATURES.json
+  - Evidence: docs/TEST_LOG.md (2025-12-28T06:15:31Z)
+- [x] REQ-071: Determine whether the Playwright Python image offers Python 3.14.
+  - Files: docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/PLAN.md, docs/FEATURES.json
+  - Evidence: docs/TEST_LOG.md (2025-12-28T06:33:11Z)
+- [x] REQ-072: Answer what the Neo4j container implications are for the Docker/Compose setup.
+  - Files: docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/PLAN.md, docs/FEATURES.json
+  - Evidence: docs/TEST_LOG.md (2025-12-28T06:35:23Z)
+- [x] REQ-073: Provide guidance for updating the codebase to adopt newly introduced Python 3.13/3.14 idioms and features.
+  - Files: docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/PLAN.md, docs/FEATURES.json
+  - Evidence: docs/TEST_LOG.md (2025-12-28T06:40:34Z, 2025-12-28T07:13:38Z)
+- [x] REQ-074: Enhance harness.py to use Python 3.14 features.
+  - Files: harness.py, docs/PLAN.md, docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/FEATURES.json
+  - Evidence: docs/TEST_LOG.md (2025-12-28T07:50:22Z)
+- [x] REQ-075: Expand harness.py adoption of Python 3.14 features beyond minimal usage (t-strings, annotationlib, compression.zstd, and additional 3.14 syntax where applicable).
+  - Files: harness.py, docs/PLAN.md, docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/FEATURES.json
+  - Evidence: docs/TEST_LOG.md (2025-12-28T08:18:09Z)
+- [x] REQ-076: Further expand harness.py adoption of Python 3.14 features (concurrent interpreter usage, additional t-string usage) and validate the module compiles per request.
+  - Files: harness.py, docs/PLAN.md, docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/FEATURES.json
+  - Evidence: docs/TEST_LOG.md (2025-12-28T08:50:38Z)
+- [x] REQ-077: Run static analysis tools concurrently using the interpreters API so each tool executes in its own interpreter.
+  - Files: harness.py, docs/PLAN.md, docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/FEATURES.json
+  - Evidence: docs/TEST_LOG.md (2025-12-28T09:57:48Z)
+- [x] REQ-078: On clicking the job requisition textarea, paste clipboard contents and run Generate Profile then Generate PDF via the existing pipeline handler.
+  - Files: harness.py
+  - Evidence: docs/TEST_LOG.md (2025-12-28T13:54:33Z)
+- [x] REQ-079: List all declared function names in harness.py to confirm existing pipeline handlers.
+  - Files: harness.py, docs/TEST_LOG.md
+  - Evidence: docs/TEST_LOG.md (2025-12-28T13:54:33Z)
+- [x] REQ-080: Add ui-playwright-check coverage for the job requisition textarea click-to-paste pipeline.
+  - Files: scripts/ui_playwright_check.py
+  - Evidence: docs/TEST_LOG.md (2025-12-28T14:16:54Z)
+- [x] REQ-081: Ensure ui-playwright-check selects a cheap LLM model (not gpt-5.2-pro) for pipeline runs.
+  - Files: scripts/ui_playwright_check.py
+  - Evidence: docs/TEST_LOG.md (2025-12-28T14:16:54Z)
+- [ ] REQ-082: Get `python harness.py --ui-playwright-check` working end-to-end.
+  - Files: scripts/ui_playwright_check.py, harness.py, docs/TEST_LOG.md, docs/AGENT_STATE.md, docs/FEATURES.json
+  - Status: failing (run-all-tests blocked by sudo prompt)
+  - Evidence: docs/TEST_LOG.md (2025-12-28T14:33:47Z)
+- [x] REQ-083: Add `python harness.py --ui-playwright-check-docker` to run UI checks in Docker only.
+  - Files: harness.py, docker-compose.yml, scripts/
+  - Notes: run against a real Neo4j container seeded with michael_scott_resume.json.
+  - Evidence: docs/TEST_LOG.md (2025-12-28T18:04:37Z)
+- [x] REQ-084: Remove stub database usage so Docker UI tests run against a real Neo4j instance populated with Michael Scott's resume data.
+  - Files: harness.py, scripts/, docs/TESTING.md
+  - Notes: remove MAX_COVERAGE_STUB_DB paths and ensure data seeding occurs before UI checks.
+  - Evidence: docs/TEST_LOG.md (2025-12-28T18:04:37Z)
+- [x] REQ-085: Add `python harness.py --run-ui-tests` as a docker-only UI test gate (Neo4j + UI only).
+  - Files: harness.py, docs/TESTING.md, scripts/run_ui_playwright_docker.sh, Dockerfile.ui, docker-compose.yml
+  - Notes: UI check exits after click-to-paste while UI_STOP_AFTER_PASTE is enabled.
+  - Evidence: docs/TEST_LOG.md (2025-12-28T18:28:21Z)
+- [x] REQ-086: Disallow LLM error bypasses in UI checks and fail fast on missing API keys.
+  - Files: scripts/ui_playwright_check.py, scripts/run_ui_tests.sh, scripts/run_ui_playwright_docker.sh, harness.py
+  - Evidence: docs/TEST_LOG.md (2025-12-28T17:06:10Z)
+- [x] REQ-087: Instrument UI Playwright checks with continuous heartbeat logs during long waits.
+  - Files: scripts/ui_playwright_check.py
+  - Evidence: docs/TEST_LOG.md (2025-12-28T17:06:10Z)
+- [x] REQ-088: Add extremely fine-grained UI logging to confirm paste-from-clipboard-on-click within the first seconds of UI test execution.
+  - Files: scripts/ui_playwright_check.py, harness.py
+  - Evidence: docs/TEST_LOG.md (2025-12-28T18:04:37Z)
+- [x] REQ-089: Temporarily stop UI Playwright checks immediately after the click-to-paste validation (success or failure).
+  - Files: scripts/ui_playwright_check.py
+  - Evidence: docs/TEST_LOG.md (2025-12-28T18:12:29Z)
+- [x] REQ-090: Update the LLM chooser to include valid OpenAI gpt-5.2* models as a static list (no dynamic fetch) and include the latest GPT-5 mini model.
+  - Files: harness.py, scripts/ui_playwright_check.py
+  - Evidence: docs/TEST_LOG.md (2025-12-28T19:16:35Z)
+- [x] REQ-091: Refresh the Gemini model list and make a Gemini 3 model the default LLM choice.
+  - Files: harness.py, scripts/ui_playwright_check.py, docs/CONFIGURATION.md
+  - Evidence: docs/TEST_LOG.md (2025-12-28T19:16:35Z)
+- [x] REQ-092: Load Gemini API keys from ~/geminikey.txt by default (with env overrides) and wire the Docker UI tests to use it.
+  - Files: harness.py, scripts/run_ui_playwright_docker.sh, scripts/run_ui_tests.sh, docs/CONFIGURATION.md
+  - Evidence: docs/TEST_LOG.md (2025-12-28T19:16:35Z)
+- [x] REQ-093: Restore full UI Playwright coverage by running all UI steps after the click-to-paste check (no early bail by default).
+  - Files: scripts/ui_playwright_check.py
+  - Evidence: docs/TEST_LOG.md (2025-12-28T19:25:00Z)
+- [x] REQ-094: Tune UI_MAX_RUNTIME to be a couple minutes longer than the computed --run-ui-tests duration.
+  - Files: scripts/run_ui_tests.sh, docs/TEST_LOG.md, docs/AGENT_STATE.md
+  - Evidence: docs/TEST_LOG.md (2025-12-28T19:43:18Z)
+- [x] REQ-095: Ensure `python harness.py --run-all-tests` works and record the result.
+  - Files: harness.py, docs/TEST_LOG.md, docs/AGENT_STATE.md
+  - Evidence: docs/TEST_LOG.md (2025-12-28T20:50:06Z)
+- [x] REQ-096: Measure `--run-all-tests` runtime and set a default max runtime a couple minutes longer than the measured value.
+  - Files: scripts/run_maxcov_e2e.sh, docs/TEST_LOG.md
+  - Evidence: docs/TEST_LOG.md (2025-12-28T20:50:06Z)
+- [x] REQ-097: Scrub repo PII related to the user, including any stored messages in logs/metadata and PII artifacts.
+  - Files: docs/AGENT_STATE.md, docs/TEST_LOG.md, docs/PLAN.md, docs/REQUIREMENTS.md, docs/FEATURES.json, docs/KNOWLEDGE_BASE.md, repo files with PII.
+  - Evidence: docs/TEST_LOG.md (2025-12-28T21:52:45Z)
+- [x] REQ-098: Delete and recreate the GitHub repo via the in-repo Python bootstrap script after the PII scrub.
+  - Files: tools/github_bootstrap.py, docs/AGENT_STATE.md, docs/TEST_LOG.md
+  - Evidence: docs/TEST_LOG.md (2025-12-28T21:50:02Z, 2025-12-28T21:52:45Z)
+- [x] REQ-099: Revert the Gemini completion usage-metadata workaround to restore the prior behavior.
+  - Files: harness.py
+  - Evidence: docs/TEST_LOG.md (2025-12-28T22:15:38Z)
+- [x] REQ-100: Improve LLM JSON extraction so Stage 1 profile generation succeeds for the job requisition in req.txt.
+  - Files: harness.py, docs/TEST_LOG.md
+  - Evidence: docs/TEST_LOG.md (2025-12-29T02:59:37Z)
+- [x] REQ-101: Retry the LLM call when JSON output is rejected, up to a configurable N attempts.
+  - Files: harness.py, docs/CONFIGURATION.md, docs/TEST_LOG.md
+  - Evidence: docs/TEST_LOG.md (2025-12-29T03:09:38Z)
+- [x] REQ-102: Strengthen JSON-retry handling so req.txt on gemini-3-pro-preview retries with corrective prompts and higher default attempts.
+  - Files: harness.py, docs/CONFIGURATION.md, docs/TEST_LOG.md
+  - Evidence: docs/TEST_LOG.md (2025-12-29T03:23:43Z)
+- [x] REQ-103: Ensure --run-ui-tests selects the same LLM model as the user (gemini-3-pro-preview).
+  - Files: scripts/run_ui_tests.sh, scripts/ui_playwright_check.py, docs/TEST_LOG.md
+  - Evidence: docs/TEST_LOG.md (2025-12-29T03:47:03Z)
+- [x] REQ-104: Empirically measure --run-ui-tests runtime with gemini-3-pro-preview and set UI_MAX_RUNTIME to measured + buffer.
+  - Files: scripts/run_ui_tests.sh, harness.py, docs/TEST_LOG.md
+  - Notes: May adjust UI timeout defaults if the longer model exceeds current limits.
+  - Evidence: docs/TEST_LOG.md (2025-12-29T13:56:36Z)
+- [x] REQ-106: Fix Stage 1 non-JSON failures for gemini-3-pro-preview so UI pipeline completes and UI tests pass.
+  - Files: harness.py, scripts/ui_playwright_check.py, docs/TEST_LOG.md
+  - Evidence: docs/TEST_LOG.md (2025-12-29T13:47:13Z)
+- [x] REQ-108: Log Stage 1 LLM JSON output to make it easy to verify success, then inspect the logged output.
+  - Files: harness.py, scripts/run_ui_tests.sh, docs/CONFIGURATION.md, docs/TEST_LOG.md
+  - Evidence: docs/TEST_LOG.md (2025-12-29T13:47:13Z)
+- [x] REQ-107: Add extremely fine-grained logging to any_llm_prompt_probe.py to debug LLM JSON responses.
+  - Files: scripts/any_llm_prompt_probe.py
+  - Evidence: docs/TEST_LOG.md (2025-12-29T12:30:26Z)
+  - Notes: Logging focuses on request/response metadata, timing, and exceptions without exposing API keys.
+- [x] REQ-105: Add a standalone any-llm probe to call gemini-3-pro-preview with prompt.yaml + req.txt and report JSON parse success.
+  - Files: scripts/any_llm_prompt_probe.py, prompt.yaml, req.txt, stop-list.txt
+  - Evidence: docs/TEST_LOG.md (2025-12-29T04:21:20Z)
+- [x] REQ-109: Add a Generate PDF (with cache busting) button that forces a fresh PDF render even when the cached signature matches.
+  - Files: harness.py
+  - Evidence: docs/TEST_LOG.md (2025-12-29T14:41:24Z)
+- [x] REQ-110: Shorten the cache-busting PDF button label so it fits without wrapping.
+  - Files: harness.py
+  - Evidence: docs/TEST_LOG.md (2025-12-29T14:56:09Z)
+- [x] REQ-111: Keep LinkedIn and GitHub contacts together even when GitHub uses a non-github.com URL.
+  - Files: harness.py, lib.typ
+  - Evidence: docs/TEST_LOG.md (2025-12-29T14:56:09Z)
+- [x] REQ-112: Keep "Generate Profile" and "Generate PDF" button labels on a single line.
+  - Files: harness.py
+  - Evidence: docs/TEST_LOG.md (2025-12-29T15:02:56Z)
+- [x] REQ-113: Keep "Refresh PDF" button label on a single line.
+  - Files: harness.py
+  - Evidence: docs/TEST_LOG.md (2025-12-29T15:10:37Z)
+- [x] REQ-114: Remove the separate "Include Skills section" toggle and rely on Section Order visibility.
+  - Files: harness.py, scripts/ui_playwright_check.py
+  - Evidence: docs/TEST_LOG.md (2025-12-29T15:14:13Z)
+- [x] REQ-115: Put Auto-fit and Pages on the same line as the Rewrite bullets with LLM toggle.
+  - Files: harness.py
+  - Evidence: docs/TEST_LOG.md (2025-12-29T15:18:19Z)
+- [x] REQ-116: Remove the "Paste & Run" and "Run Pipeline" buttons from the Job Requisition header row.
+  - Files: harness.py, scripts/ui_playwright_check.py
+  - Evidence: docs/TEST_LOG.md (2025-12-29T15:27:02Z)
+- [x] REQ-117: Use a more professional, less clash-y color scheme for the primary action buttons.
+  - Files: harness.py
+  - Evidence: docs/TEST_LOG.md (2025-12-29T15:31:17Z)
+- [x] REQ-118: Add a Profile chooser that lists date/time, company, and role for selecting which Profile to load.
+  - Files: harness.py
+  - Evidence: docs/TEST_LOG.md (2025-12-29T15:57:21Z)
+- [x] REQ-119: Match the Profile chooser width to the Model chooser width.
+  - Files: harness.py
+  - Evidence: docs/TEST_LOG.md (2025-12-29T16:03:30Z)
+- [x] REQ-120: Keep the Profile chooser within the app's right edge.
+  - Files: harness.py
+  - Evidence: docs/TEST_LOG.md (2025-12-29T16:05:36Z)
+- [x] REQ-121: Ensure the Profile chooser stays within the app container even for long labels.
+  - Files: harness.py
+  - Evidence: docs/TEST_LOG.md (2025-12-29T16:10:05Z)
+- [ ] REQ-122: Use Dynoselect for the Profile chooser.
+  - Files: harness.py, requirements.txt
+  - Evidence: docs/TEST_LOG.md (2025-12-29T16:41:32Z)
+- [x] REQ-123: Replace the Profile chooser with Select2.
+  - Files: harness.py, requirements.txt
+  - Evidence: docs/TEST_LOG.md (2025-12-29T17:05:24Z)
+- [x] REQ-124: Default the Profile chooser to the top 100 most recent and support searching all Profiles in Neo4j.
+  - Files: harness.py
+  - Evidence: docs/TEST_LOG.md (2025-12-29T17:05:24Z)
+- [x] REQ-125: Fix reflex run crash by updating FastAPI Query defaults to be compatible with the installed version.
+  - Files: harness.py
+  - Notes: Fix the FastAPI Query default usage that crashes reflex run.
+  - Evidence: docs/TEST_LOG.md (2025-12-29T17:18:12Z)
+- [x] REQ-126: Run a basic `reflex run` smoke test and log the result.
+  - Files: docs/TEST_LOG.md, docs/AGENT_STATE.md
+  - Evidence: docs/TEST_LOG.md (2025-12-29T17:18:12Z)
+- [x] REQ-127: Fix the Profile selector so only one Select2 control renders and placeholder/search behave normally.
+  - Files: harness.py
+  - Evidence: docs/TEST_LOG.md (2025-12-29T18:04:39Z)
+- [x] REQ-128: Verify the Profile selector fix via reflex run + browser DOM check and API response.
+  - Files: docs/TEST_LOG.md, docs/AGENT_STATE.md
+  - Evidence: docs/TEST_LOG.md (2025-12-29T18:04:39Z)
+- [x] REQ-129: Fix Select2 search so results load without "results could not be loaded" errors.
+  - Files: harness.py
+  - Notes: Resolve backend URL dynamically so Select2 requests reach the active backend port.
+  - Evidence: docs/TEST_LOG.md (2025-12-29T18:20:59Z)
+- [x] REQ-130: Verify Select2 search results load before and after typing.
+  - Files: docs/TEST_LOG.md, docs/AGENT_STATE.md
+  - Notes: Verified via reflex run + Playwright dropdown checks.
+  - Evidence: docs/TEST_LOG.md (2025-12-29T18:20:59Z)
+- [x] REQ-131: Match the Profile chooser styling (box + text) to the Model chooser.
+  - Files: harness.py
+  - Notes: Align Select2 selection colors/typography with Radix select trigger theme.
+  - Evidence: docs/TEST_LOG.md (2025-12-29T18:33:44Z)
+- [x] REQ-132: Load cached PDF when a Profile is selected, and use the selected Profile when Refresh PDF is clicked.
+  - Files: harness.py
+  - Notes: Selecting a Profile hydrates the UI and loads cached PDF when available; Refresh PDF forces a re-render using the selected Profile.
+  - Evidence: docs/TEST_LOG.md (2025-12-29T19:43:02Z)
+- [x] REQ-133: Scrub repo of user PII and update GitHub handle references to mingusb.
+  - Files: .github/ISSUE_TEMPLATE/config.yml, .github/CODEOWNERS, docs/AGENT_STATE.md, docs/FEATURES.json, docs/PLAN.md, docs/TEST_LOG.md
+  - Evidence: docs/TEST_LOG.md (2025-12-29T22:24:24Z)
+- [x] REQ-134: Delete and recreate the GitHub repo from scratch, then push a fresh history for the current codebase.
+  - Files: tools/github_bootstrap.py, .git/config, docs/TEST_LOG.md
+  - Evidence: docs/TEST_LOG.md (2025-12-29T22:39:00Z)
+- [x] REQ-135: Remove non-distributable fonts from the repo and recreate the GitHub repo with a fresh history.
+  - Files: fonts/, .gitignore, tools/github_bootstrap.py, docs/TEST_LOG.md
+  - Evidence: docs/TEST_LOG.md (2025-12-29T22:47:22Z)
+- [x] REQ-136: Restore local custom fonts outside git after repo recreation.
+  - Files: fonts/, .gitignore, docs/TEST_LOG.md
+  - Evidence: docs/TEST_LOG.md (2025-12-30T07:15:39Z)
+- [x] REQ-137: Update AGENTS instructions to forbid verbatim user request capture and require neutral summaries.
+  - Files: AGENTS.md
+  - Notes: Summaries should avoid quoting user text in state and requirements logs.
+  - Evidence: docs/TEST_LOG.md (2025-12-30T10:24:17Z)
+- [x] REQ-138: Support <date> tags in bullet text across sections and drop the pipe-delimited date format.
+  - Files: harness.py
+  - Notes: Parse <date>...</date> in any bullet text and render date bullets consistently across sections.
+  - Evidence: docs/TEST_LOG.md (2025-12-30T10:35:53Z)
+- [x] REQ-139: Delete and recreate the GitHub repo using the bootstrap script.
+  - Files: tools/github_bootstrap.py, tools/github_bootstrap_config.json, .git/config
+  - Notes: Use the repo bootstrap script to delete and recreate the GitHub repository.
+  - Evidence: docs/TEST_LOG.md (2025-12-30T11:05:49Z)
+- [x] REQ-140: Recreate the repo with a clean Git history and push a fresh main branch.
+  - Files: .git/, docs/TEST_LOG.md
+  - Notes: Create a new root commit and force-push main so the remote has no prior history.
+  - Evidence: docs/TEST_LOG.md (2025-12-30T11:12:34Z)
+- [x] REQ-141: Delete the remote repo, remove local .git, and recreate the repo from scratch.
+  - Files: tools/github_bootstrap.py, tools/github_bootstrap_config.json, .git/
+  - Notes: Delete the GitHub repo, delete local git metadata, re-init, and push a fresh main.
+  - Evidence: docs/TEST_LOG.md (2025-12-30T11:50:56Z)
+- [x] REQ-142: Provide a script to delete the remote repo, remove local .git, recreate the repo, and push a fresh main branch on demand.
+  - Files: scripts/, tools/github_bootstrap.py, tools/github_bootstrap_config.json
+  - Notes: Script should guard destructive operations and accept owner/repo/config inputs.
+  - Evidence: docs/TEST_LOG.md (2025-12-30T12:45:04Z)
+- [x] REQ-143: Remove the failing GitHub Action from the repo.
+  - Files: .github/workflows/
+  - Notes: Disable or remove the workflow that triggers failing runs.
+  - Evidence: docs/TEST_LOG.md (2025-12-30T12:00:35Z)
+- [x] REQ-144: Rewrite README.md to be professional and include top badges (view counter and project stats).
+  - Files: README.md
+  - Notes: Replace the current README with a greenfield, real-project style layout and badges.
+  - Evidence: docs/TEST_LOG.md (2025-12-30T12:18:22Z)
+- [x] REQ-145: Review README.md for accuracy against the repo and report discrepancies.
+  - Files: README.md, docs/CONFIGURATION.md, docs/TESTING.md, docs/LONG_RUN.md, harness.py
+  - Notes: Provide an accuracy assessment and list any mismatches or missing caveats.
+  - Evidence: docs/TEST_LOG.md (2025-12-30T12:23:18Z)
+- [x] REQ-146: Rewrite README.md to match best-in-class GitHub README quality.
+  - Files: README.md
+  - Notes: Expand with polished structure, accurate setup details, and professional presentation.
+  - Evidence: docs/TEST_LOG.md (2025-12-30T12:27:04Z)
+- [x] REQ-147: Read all documentation and state/log files, then revise README.md based on that review.
+  - Files: README.md, docs/, *.md
+  - Notes: Review all documentation and LLM tracking logs; update README to reflect findings.
+  - Evidence: docs/TEST_LOG.md (2025-12-30T12:36:59Z)
+- [x] REQ-148: Perform a marketing-focused rewrite of README.md.
+  - Files: README.md
+  - Notes: Improve messaging, positioning, and presentation while keeping content accurate.
+  - Evidence: docs/TEST_LOG.md (2025-12-30T12:40:59Z)
+- [ ] REQ-149: Run the repo reset script to delete/recreate the remote and rebuild local git history.
+  - Files: scripts/recreate_repo.sh, tools/github_bootstrap.py, tools/github_bootstrap_config.json
+  - Notes: Execute the script to delete the remote repo, remove local .git, re-init, and push a fresh main branch.
+  - Evidence: pending

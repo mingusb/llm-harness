@@ -1,0 +1,19 @@
+{
+  "typeCheckingMode": "basic",
+  "reportMissingImports": "none",
+  "reportMissingTypeStubs": "none",
+  "exclude": [
+    "**/.venv/**",
+    "**/venv/**",
+    "**/__pycache__/**",
+    "**/assets/**",
+    "**/assets_out/**",
+    "**/backups/**",
+    "**/diagrams/**",
+    "**/fonts/**",
+    "**/maxcov_logs/**",
+    "**/maxcov_raster_*/**",
+    "**/node_modules/**",
+    "**/packages/**"
+  ]
+}
