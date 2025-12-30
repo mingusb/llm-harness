@@ -496,3 +496,7 @@ Note: Do not record verbatim user messages in this file; track requirements by R
   - Files: README.md
   - Notes: Clarify WSL expectations and adjust local setup guidance accordingly.
   - Evidence: docs/TEST_LOG.md (2025-12-30T13:03:37Z)
+- [x] REQ-152: Add Neo4j installation/setup guidance to README local setup.
+  - Files: README.md
+  - Notes: Document how to install or run Neo4j for local parity (Docker Compose or local install).
+  - Evidence: docs/TEST_LOG.md (2025-12-30T13:12:20Z)

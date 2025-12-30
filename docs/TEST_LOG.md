@@ -740,3 +740,5 @@
   - Notes: Expanded README local setup with Dockerfile parity requirements for --run-all-tests; tests not requested.
 - 2025-12-30T13:03:37Z: Manual review (pass)
   - Notes: Updated README local setup to reflect WSL as the intended environment; tests not requested.
+- 2025-12-30T13:12:20Z: Manual review (pass)
+  - Notes: Added Neo4j installation/setup guidance to README local setup; tests not requested.

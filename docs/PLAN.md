@@ -658,6 +658,12 @@
   - Risks: WSL-specific instructions may be confusing for non-WSL users.
   - Verification approach: manual review; tests not requested.
   - Evidence: docs/TEST_LOG.md (2025-12-30T13:03:37Z).
+- [x] M147 (REQ-152): Add Neo4j install/setup guidance to README local setup.
+  - Exit criteria: README local setup explains how to run Neo4j locally or via Docker Compose.
+  - Dependencies: README.md, docker-compose.yml.
+  - Risks: platform-specific steps may drift from upstream Neo4j instructions.
+  - Verification approach: manual review; tests not requested.
+  - Evidence: docs/TEST_LOG.md (2025-12-30T13:12:20Z).
 
 ## Dependencies
 - Python tooling installed for all static analyzers in harness.py.

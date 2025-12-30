@@ -3,7 +3,7 @@
 ## Status
 - Phase: Stabilization
 - Owner: Codex
-- Timestamp: 2025-12-30T13:04:07Z
+- Timestamp: 2025-12-30T13:12:50Z
 
 ## Timebox
 - Requested duration: 4 hours
@@ -20,11 +20,11 @@
 - Test policy: tests are optional and run only on explicit request; confirm non-production DB targets
 
 ## Fingerprints
-- README.md: e106af38a966da02316564eadad647e0e74e7857d62ebb3ca5ffb6e6003d02ec
+- README.md: 44c0c216739c04ae6040cabd2cec8cdd1535e436c0911c4009aa98cf179e1e38
 - docs/TESTING.md: 0745f8d4067f6f9f0510d2ae22b78f1b0ed0c457cd4faf8ab7a4001ecafd098b
 - docs/LONG_RUN.md: 349d222690d4b477a4473847199d07ffc37caee3b2b9b770fe0a43355d11cc4a
-- docs/REQUIREMENTS.md: 87d0ac9c194e9eb0263568050dcf1da5f0959f1d62089d6de29f71a63436ab2a
-- docs/FEATURES.json: f26358cc4a38ac9ddbaeee38cc62f4d56b44acafe9efb67e8ba7065e45d0749b
+- docs/REQUIREMENTS.md: c2dd8b47716a108dda81e1fe253684deb90752adefed80bca41d085d2b1a0d12
+- docs/FEATURES.json: 13f3cb459e833c85c9325b36d9954ed799538475bfca57ce212329ad288c394e
 
 ## File Claims
 - None (released)
@@ -2285,3 +2285,23 @@
 - Failed assumption: local setup guidance did not need to specify the WSL target environment.
   - Corrective action: clarified WSL expectations and Docker Desktop integration in README.
   - Prevention: state the intended OS target explicitly in setup sections.
+- 2025-12-30T13:11:25Z: Phase transition: Stabilization -> Intake (REQ-152).
+- Intake complete: README.md, docs/TESTING.md, docs/LONG_RUN.md reviewed.
+- New request intake: [redacted].
+- 2025-12-30T13:11:25Z: Phase transition: Intake -> Requirements (REQ-152).
+- Requirements updated: REQ-152 added to docs/REQUIREMENTS.md and docs/FEATURES.json.
+- 2025-12-30T13:11:25Z: Phase transition: Requirements -> Design (REQ-152).
+- Design review (REQ-152): plan updated with M147; plan reviewed for completeness.
+- Requirement restatement (pre-implementation): [redacted].
+- 2025-12-30T13:12:50Z: Phase transition: Design -> Implementation (REQ-152).
+- Implementation: added Neo4j setup guidance (Docker Compose or local install) to README local setup.
+- Requirement restatement (post-implementation): [redacted].
+- 2025-12-30T13:12:50Z: Phase transition: Implementation -> Verification (REQ-152).
+- Verification: manual review logged in docs/TEST_LOG.md (2025-12-30T13:12:20Z).
+- 2025-12-30T13:12:50Z: Phase transition: Verification -> Stabilization (REQ-152).
+- Stabilization: updated requirements/plan/features status for REQ-152 with evidence.
+- 2025-12-30T13:12:50Z: Fingerprint change detected: docs/REQUIREMENTS.md updated; hashes recorded above. Supporting docs/PLAN.md, docs/FEATURES.json, docs/TEST_LOG.md, README.md updated.
+- 2025-12-30T13:12:50Z: Checkpoint (REQ-152): scope=README Neo4j setup update; tests run=manual review; last known good=docs/TEST_LOG.md (2025-12-30T13:12:20Z); remaining risks=local Neo4j install steps vary by distro.
+- Failed assumption: Neo4j install guidance was sufficiently implied by docker compose usage.
+  - Corrective action: added explicit Neo4j setup section with Docker Compose and local install guidance.
+  - Prevention: list all required services in local setup sections.

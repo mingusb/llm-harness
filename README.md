@@ -125,6 +125,20 @@ Then install the remaining pinned tools and browser deps:
 
 On macOS/Windows, install equivalents via your package manager and ensure versions align with the Dockerfile.
 
+Neo4j is required for all database-backed flows. Choose one:
+
+Option A (recommended, WSL): run Neo4j via Docker Compose.
+
+```bash
+docker compose up -d neo4j
+```
+
+Option B (local install): install Neo4j 5.x on WSL and ensure the service is running, then set:
+
+- `NEO4J_URI` (default: `bolt://127.0.0.1:7687`)
+- `NEO4J_USER` (default: `neo4j`)
+- `NEO4J_PASSWORD` (default: `ResumeBuilder`)
+
 ## Inputs and data
 
 - Prompt and requirement input: `prompt.yaml` plus `req.txt` or `--req-file`. The default `req.txt` is intentionally not tracked.
