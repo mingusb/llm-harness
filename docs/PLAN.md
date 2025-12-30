@@ -640,12 +640,12 @@
   - Risks: marketing language could overpromise beyond actual capabilities.
   - Verification approach: manual review; tests not requested.
   - Evidence: docs/TEST_LOG.md (2025-12-30T12:40:59Z).
-- [ ] M144 (REQ-149): Execute the repo reset script to recreate the remote and clean local history.
+- [x] M144 (REQ-149): Execute the repo reset script to recreate the remote and clean local history.
   - Exit criteria: scripts/recreate_repo.sh completes, remote repo recreated, and fresh main branch pushed.
   - Dependencies: scripts/recreate_repo.sh, tools/github_bootstrap.py, GitHub PAT, git CLI.
   - Risks: deletion is irreversible; local .git removal discards metadata.
   - Verification approach: run scripts/recreate_repo.sh --yes and log commands.
-  - Evidence: pending.
+  - Evidence: docs/TEST_LOG.md (2025-12-30T12:50:37Z).
 
 ## Dependencies
 - Python tooling installed for all static analyzers in harness.py.

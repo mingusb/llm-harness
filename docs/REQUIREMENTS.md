@@ -484,7 +484,7 @@ Note: Do not record verbatim user messages in this file; track requirements by R
   - Files: README.md
   - Notes: Improve messaging, positioning, and presentation while keeping content accurate.
   - Evidence: docs/TEST_LOG.md (2025-12-30T12:40:59Z)
-- [ ] REQ-149: Run the repo reset script to delete/recreate the remote and rebuild local git history.
+- [x] REQ-149: Run the repo reset script to delete/recreate the remote and rebuild local git history.
   - Files: scripts/recreate_repo.sh, tools/github_bootstrap.py, tools/github_bootstrap_config.json
   - Notes: Execute the script to delete the remote repo, remove local .git, re-init, and push a fresh main branch.
-  - Evidence: pending
+  - Evidence: docs/TEST_LOG.md (2025-12-30T12:50:37Z)

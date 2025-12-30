@@ -731,3 +731,8 @@
   - Notes: Marketing pass on README messaging and positioning while keeping content accurate; tests not requested.
 - 2025-12-30T12:45:04Z: Manual review (pass)
   - Notes: Added scripts/recreate_repo.sh to automate repo deletion, local .git reset, and fresh push; tests not requested.
+- 2025-12-30T12:50:37Z: scripts/recreate_repo.sh (fail)
+  - Notes: Initial run blocked at git push due to interactive credential prompt; aborted and reran with GIT_ASKPASS.
+- 2025-12-30T12:50:37Z: scripts/recreate_repo.sh (pass)
+  - Command: scripts/recreate_repo.sh --yes
+  - Notes: Deleted and recreated the remote repo, removed local git metadata, reinitialized, and pushed a fresh main branch for REQ-149.
